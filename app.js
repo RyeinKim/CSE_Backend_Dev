@@ -1,8 +1,11 @@
 const https = require('https');
 const express = require('express');
-const routes = require('./routes/index');
 const fs = require('fs');
 const dotenv = require('dotenv');
+
+const routes = require('./routes/index');
+const config = require('./config/config');
+const {devlog} = require("./config/config");
 
 const app = express();
 const port = 80;
@@ -17,10 +20,12 @@ const options = {
     ca: fs.readFileSync(process.env.CA_PATH)
 };
 const server = https.createServer(options, app);
+devlog(`HTTPS certificate authority loaded.`);
 
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+devlog(`Middleware loaded.`);
 
 // Routes
 app.use('/', routes);
@@ -39,10 +44,11 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
-    console.log(`HTTP listening on port ${port}`);
+server.listen(443, () => {
+    devlog(`HTTPS listening on port ${port}`);
 });
 
-server.listen(443, () => {
-    console.log(`HTTPS listening on port ${port}`);
+app.listen(port, () => {
+    devlog(`HTTP listening on port ${port}`);
 });
+
