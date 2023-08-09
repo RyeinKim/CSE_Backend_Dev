@@ -6,7 +6,6 @@ const fs = require('fs');
 const app = express();
 const port = 80;
 
-
 // HTTPS
 const options = {
     key: fs.readFileSync('./keys/server.key'),
@@ -14,7 +13,6 @@ const options = {
     ca: fs.readFileSync('./keys/server.csr')
 };
 const server = https.createServer(options, app);
-
 
 // 미들웨어
 app.use(express.json());
