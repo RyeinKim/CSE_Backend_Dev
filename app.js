@@ -2,9 +2,13 @@ const https = require('https');
 const express = require('express');
 const routes = require('./routes/index');
 const fs = require('fs');
+const dotenv = require('dotenv');
 
 const app = express();
 const port = 80;
+
+dotenv.config();
+dotenv.config({ path: '.env.keys' });
 
 // HTTPS
 const options = {
