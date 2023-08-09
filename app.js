@@ -1,7 +1,18 @@
+const https = require('https');
 const express = require('express');
+const routes = require('./routes/index');
+const fs = require('fs');
+
 const app = express();
 const port = 80;
-const routes = require('./routes/index');
+
+
+// HTTPS
+const options = {
+    key: fs.readFileSync('./keys/private.key'),
+    cert: fs.readFileSync('./keys/public.key')
+};
+const server = https.createServer(options, app);
 
 // 미들웨어
 app.use(express.json());
@@ -24,6 +35,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
