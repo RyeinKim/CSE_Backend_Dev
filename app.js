@@ -8,9 +8,9 @@ const port = 80;
 
 // HTTPS
 const options = {
-    key: fs.readFileSync('./keys/server.key'),
-    cert: fs.readFileSync('./keys/server.crt'),
-    ca: fs.readFileSync('./keys/server.csr')
+    key: fs.readFileSync(process.env.KEY_PATH),
+    cert: fs.readFileSync(process.env.CERT_PATH),
+    ca: fs.readFileSync(process.env.CA_PATH)
 };
 const server = https.createServer(options, app);
 
