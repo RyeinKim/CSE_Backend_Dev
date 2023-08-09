@@ -9,10 +9,12 @@ const port = 80;
 
 // HTTPS
 const options = {
-    key: fs.readFileSync('./keys/private.pem'),
-    cert: fs.readFileSync('./keys/public.pem')
+    key: fs.readFileSync('./keys/server.key'),
+    cert: fs.readFileSync('./keys/server.crt'),
+    ca: fs.readFileSync('./keys/server.csr')
 };
 const server = https.createServer(options, app);
+
 
 // 미들웨어
 app.use(express.json());
@@ -35,6 +37,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-server.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
+app.listen(port, () => {
+    console.log(`HTTP listening on port ${port}`);
+});
+
+server.listen(443, () => {
+    console.log(`HTTPS listening on port ${port}`);
 });
