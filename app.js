@@ -2,6 +2,8 @@ const https = require('https');
 const express = require('express');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const session = require('express-session');
+// const MemoryStore = require('memorystore')(session);
 
 const routes = require('./routes/index');
 const config = require('./config/config');
@@ -12,6 +14,18 @@ const port = 80;
 
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
+
+// session
+app.use(session({
+    secret: "qweqwe",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24,
+    },
+}));
 
 // HTTPS
 const options = {
