@@ -1,5 +1,6 @@
 const User = require("../models/users");
 const mysql = require('mysql');
+const {devlog} = require("../config/config");
 
 /**
  * 회원 정보 목록 조회
@@ -31,6 +32,7 @@ exports.loadUsers = (req, res) => {
             return res.status(500).json({ message: '내부 서버 오류' });
         } else {
             console.log(`getUsers Controllers`);
+            console.log(`resData = `, resData);
             return res.status(200).json(resData);
         }
     });
@@ -82,8 +84,8 @@ exports.deleteUser = (req, res) => {
 // 회원 로그인
 exports.loginUser = (req, res) => {
     const { email, password } = req.body;
-    // console.log(`email = `, email);
-    // console.log(`password = `, password);
+    devlog(`email = ${email}`);
+    devlog(`password = ${password}`);
     const reqData = {
         email: email,
         password: password
@@ -99,7 +101,8 @@ exports.loginUser = (req, res) => {
         }
 
         req.session.user_id = resData;
-        // console.log(`req.session.user_id = `, req.session.user_id);
+        devlog(`[B] req.sessionID = ${req.sessionID}`);
+        devlog(`[B] req.session.user_id = ${req.session.user_id}`);
         return res.status(200).json({ user_id: resData, session_id: req.sessionID });
     });
 }

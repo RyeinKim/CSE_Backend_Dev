@@ -3,7 +3,7 @@ const express = require('express');
 const fs = require('fs');
 const dotenv = require('dotenv');
 const session = require('express-session');
-// const MemoryStore = require('memorystore')(session);
+const cors = require('cors');
 
 const routes = require('./routes/index');
 const config = require('./config/config');
@@ -24,6 +24,7 @@ app.use(session({
         httpOnly: true,
         secure: false,
         maxAge: 1000 * 60 * 60 * 24,
+        sameSite: 'Lax', // Cross-site request 전송을 허용
     },
 }));
 
@@ -39,6 +40,10 @@ devlog(`HTTPS certificate authority loaded.`);
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 devlog(`Middleware loaded.`);
 
 // Routes
