@@ -136,4 +136,3 @@ dist
 config/localDB.js
 package.json
 /keys
-/config/config.js
