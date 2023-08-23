@@ -28,22 +28,22 @@ exports.loadUsers = (req, res) => {
 
     User.loadUsers(reqData, (error, resData) => {
         if (error) {
-            console.error(error);
+            console.log(error);
             return res.status(500).json({ message: '내부 서버 오류' });
         } else {
-            console.log(`getUsers Controllers`);
-            console.log(`resData = `, resData);
-            return res.status(200).json(resData);
+            devlog(`getUsers Controllers`);
+            devlog(`resData = ${resData}`);
+            return res.status(200).json({ message: resData });
         }
     });
 };
 
 // 회원 전화번호 업데이트
 exports.updateUser = (req, res) => {
-    console.log(`updateUser req.session = `, req.session);
+    console.log(`[Cont] updateUser req.session = `, req.session);
     const { email, phoneNumber } = req.body;
-    console.log(`updateUser email = `, email);
-    console.log(`updateUser phoneNumber = `, phoneNumber);
+    console.log(`[Cont] updateUser email = `, email);
+    console.log(`[Cont] updateUser phoneNumber = `, phoneNumber);
     const reqData = {
         email: email,
         phoneNumber: phoneNumber
@@ -97,7 +97,7 @@ exports.loginUser = (req, res) => {
         }
 
         if (resData === null) {
-            return res.status(401).json({ code: 'invalid email or password' });
+            return res.status(401).json({ error: 'invalid email or password' });
         }
 
         req.session.user_id = resData;
@@ -106,11 +106,22 @@ exports.loginUser = (req, res) => {
         return res.status(200).json({ user_id: resData, session_id: req.sessionID });
     });
 }
+
+exports.checkUserAuth = (req, res) => {
+    if (req.session.user_id) {
+        // 사용자가 로그인되어 있는 경우
+        res.status(200).json({ authenticated: true });
+    } else {
+        // 사용자가 로그인되어 있지 않은 경우
+        res.status(401).json({ authenticated: false });
+    }
+}
+
 // 회원 로그아웃
 exports.logoutUser = (req, res) => {
     console.log(`logout req.session = `, req.session);
     const user_id = req.session.user_id;
-    if (!user_id) return res.status(400).json({ code: 'invalid_user_id '});
+    if (!user_id) return res.status(400).json({ error: 'invalid_user_id '});
     req.session.destroy();
     return res.status(204).end();
 }

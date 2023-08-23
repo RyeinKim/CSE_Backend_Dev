@@ -20,6 +20,14 @@ exports.createUser = (req, res) => {
 exports.registerUser = (req, res) => {
     const {email, username, password, phoneNumber } = req.body;
 
+    if (!email || !username || !password || !phoneNumber) {
+        return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
+    }
+
+    if (email === null || username === null || password === null || phoneNumber === null) {
+        return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
+    }
+
     const reqData = {
         email: mysql.escape(email),
         username: mysql.escape(username),
@@ -37,6 +45,6 @@ exports.registerUser = (req, res) => {
             user_id: user_id
         };
 
-        return res.status(201).json(resData);
+        return res.status(201).json({ message: `Register Success. Your id is ${resData.user_id}` });
     });
 };

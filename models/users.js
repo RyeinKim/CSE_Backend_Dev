@@ -1,4 +1,5 @@
 const mysql = require('../config/database');
+const {devlog} = require("../config/config");
 
 /**
  * 회원 정보 목록 조회
@@ -9,7 +10,7 @@ const mysql = require('../config/database');
 
 // 회원 정보 목록 조회
 exports.loadUsers = (reqData, callback) => {
-    console.log("loadUsers in");
+    console.log("[Model] loadUsers in");
     const sql = `SELECT * FROM users LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
     mysql.connection.query(sql, (error, results) => {
         if (error) {
@@ -54,6 +55,7 @@ exports.updateUser = (reqData, callback) => {
 // 회원 정보 삭제
 exports.deleteUser = (reqData, callback) => {
     console.log('delete in');
+    devlog(`[Model] reqData.user_id = ${reqData.user_id}`);
     const sql = `DELETE FROM users WHERE id = ${reqData.user_id};`;
     mysql.connection.query(sql, (error, results) => {
         if (error) {
