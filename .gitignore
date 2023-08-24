@@ -133,6 +133,4 @@ dist
 # Webstrom
 .idea
 
-config/localDB.js
-package.json
 /keys
