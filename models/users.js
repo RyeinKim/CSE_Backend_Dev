@@ -19,22 +19,8 @@ exports.loadUsers = (reqData, callback) => {
             callback(null, results);
         }
     });
-};
-/*
-exports.loadUsers = (reqData, callback) => {
-    console.log("loadUsers in");
-    const reqLimit = reqData.limit.slice(1, -1);
-    const reqOffset = reqData.offset.slice(1, -1);
-    const sql = `SELECT * FROM users limit ${reqLimit} offset ${reqOffset};`;
-    mysql.connection.query(sql, (error, results) => {
-        if (error) {
-            callback(error, null);
-        } else {
-            callback(null, results);
-        }
-    });
 }
-*/
+
 
 // 회원 전화번호 업데이트
 exports.updateUser = (reqData, callback) => {
@@ -92,3 +78,19 @@ exports.loginUser = (reqData, callback) => {
         return callback(null, results[0].id);
     });
 }
+
+/*
+exports.loadUsers = (reqData, callback) => {
+    console.log("loadUsers in");
+    const reqLimit = reqData.limit.slice(1, -1);
+    const reqOffset = reqData.offset.slice(1, -1);
+    const sql = `SELECT * FROM users limit ${reqLimit} offset ${reqOffset};`;
+    mysql.connection.query(sql, (error, results) => {
+        if (error) {
+            callback(error, null);
+        } else {
+            callback(null, results);
+        }
+    });
+}
+*/

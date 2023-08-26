@@ -1,21 +1,16 @@
 const Post = require('../models/posts');
 const mysql = require('mysql');
-/*// 회원 정보 추가
-exports.createUser = (req, res) => {
-    const { email, username, password, phoneNumber } = req.body;
+const User = require("../models/users");
+const {devlog} = require("../config/config");
 
-    if (!email || !username || !password || !phoneNumber) {
-        return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
-    }
+/**
+ * 회원가입
+ * 게시글쓰기
+ * 유저ID로 유저이름 가져오기
+ * 게시글ID로 게시글 불러오기
+ */
 
-    Post.createUser(email, username, password, phoneNumber, (error, results) => {
-        if (error) {
-            return res.status(500).json({ error: 'Database error.' });
-        }
-        return res.status(201).json({ message: 'User created successfully.' });
-    });
-};*/
-
+// 회원가입
 exports.registerUser = (req, res) => {
     const {email, username, password, phoneNumber } = req.body;
 
@@ -48,6 +43,7 @@ exports.registerUser = (req, res) => {
     });
 };
 
+// 게시글쓰기
 exports.writePost = (req, res) => {
     const { title, content } = req.body;
     const { user_id } = req.session; // 로그인한 사용자의 user_id
@@ -63,8 +59,6 @@ exports.writePost = (req, res) => {
     if (!user_id) {
         return res.status(401).json({ error: 'Authentication required.' });
     }
-
-    console.log("Here is ok");
 
     // user_id를 사용하여 사용자 정보 조회
     Post.getUserById(user_id, (error, user) => {
@@ -95,6 +89,7 @@ exports.writePost = (req, res) => {
     });
 }
 
+// 유저ID로 유저이름 가져오기
 exports.getUserById = (req, res) => {
     const user_id = req.params.user_id;
 
@@ -110,3 +105,49 @@ exports.getUserById = (req, res) => {
         return res.status(200).json(user);
     });
 }
+
+exports.getPostsAll = (req, res) => {
+    Post.getPostsAll((error, posts) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: '내부 서버 오류' });
+        } else {
+            devlog(`getUsers Controllers`);
+            devlog(`resData = ${posts}`);
+            return res.status(200).json({ message: posts });
+        }
+    });
+}
+
+// 게시글ID로 게시글 불러오기
+exports.getPostById = (req, res) => {
+    const post_id = req.params.post_id;
+
+    Post.getPostById(post_id, (error, post) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        return res.status(200).json({ message: post });
+    })
+}
+
+/*// 회원 정보 추가
+exports.createUser = (req, res) => {
+    const { email, username, password, phoneNumber } = req.body;
+
+    if (!email || !username || !password || !phoneNumber) {
+        return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
+    }
+
+    Post.createUser(email, username, password, phoneNumber, (error, results) => {
+        if (error) {
+            return res.status(500).json({ error: 'Database error.' });
+        }
+        return res.status(201).json({ message: 'User created successfully.' });
+    });
+};*/

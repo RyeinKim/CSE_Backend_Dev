@@ -8,6 +8,7 @@ const {devlog} = require("../config/config");
  * 회원 정보 삭제
  * 회원 로그인
  * 회원 로그아웃
+ * 로그인 상태 확인
  */
 
 // 회원 정보 목록 조회
@@ -36,7 +37,7 @@ exports.loadUsers = (req, res) => {
             return res.status(200).json({ message: resData });
         }
     });
-};
+}
 
 // 회원 전화번호 업데이트
 exports.updateUser = (req, res) => {
@@ -107,6 +108,16 @@ exports.loginUser = (req, res) => {
     });
 }
 
+// 회원 로그아웃
+exports.logoutUser = (req, res) => {
+    console.log(`logout req.session = `, req.session);
+    const user_id = req.session.user_id;
+    if (!user_id) return res.status(400).json({ error: 'invalid_user_id '});
+    req.session.destroy();
+    return res.status(204).end();
+}
+
+// 로그인 상태 확인
 exports.checkUserAuth = (req, res) => {
     if (req.session.user_id) {
         // 사용자가 로그인되어 있는 경우
@@ -117,11 +128,3 @@ exports.checkUserAuth = (req, res) => {
     }
 }
 
-// 회원 로그아웃
-exports.logoutUser = (req, res) => {
-    console.log(`logout req.session = `, req.session);
-    const user_id = req.session.user_id;
-    if (!user_id) return res.status(400).json({ error: 'invalid_user_id '});
-    req.session.destroy();
-    return res.status(204).end();
-}
