@@ -107,6 +107,33 @@ exports.getUserById = (req, res) => {
 }
 
 exports.getPostsAll = (req, res) => {
+    const { offset, limit } = req.query;
+
+    if (!offset || isNaN(offset) || offset < 0) {
+        return res.status(400).json({ code: 'invalid_offset' });
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    const reqData = {
+        offset: offset,
+        limit: limit,
+    };
+
+    Post.getPostsAll(reqData, (error, posts) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: '내부 서버 오류' });
+        } else {
+            devlog(`getPostsAll Controllers`);
+            devlog(`resData = ${posts}`);
+            return res.status(200).json({ message: posts });
+        }
+    });
+}
+
+/*exports.getPostsAll = (req, res) => {
     Post.getPostsAll((error, posts) => {
         if (error) {
             console.log(error);
@@ -117,7 +144,7 @@ exports.getPostsAll = (req, res) => {
             return res.status(200).json({ message: posts });
         }
     });
-}
+}*/
 
 // 게시글ID로 게시글 불러오기
 exports.getPostById = (req, res) => {

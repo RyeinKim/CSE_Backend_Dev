@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/users/register', postsController.registerUser);
 router.post('/posts/write', isLoggedIn, postsController.writePost);
 router.get('', isLoggedIn, postsController.getUserById);
-router.get('/posts', isLoggedIn, postsController.getPostsAll);
+router.get('/posts', postsController.getPostsAll);
 router.get('/posts/:post_id', isLoggedIn, postsController.getPostById);
 
 module.exports = router;

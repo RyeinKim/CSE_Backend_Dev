@@ -56,9 +56,9 @@ exports.getUserById = (user_id, callback) => {
     });
 }
 
-exports.getPostsAll = (callback) => {
+exports.getPostsAll = (reqData, callback) => {
     console.log("[Model] getPostsAll in");
-    const sql = `SELECT * FROM posts;`;
+    const sql = `SELECT * FROM posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
     mysql.connection.query(sql, (error, results) => {
         if (error) {
             callback(error, null);
