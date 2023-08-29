@@ -3,7 +3,7 @@ const mysql = require('mysql');
 const {devlog} = require("../config/config");
 const db = require("../config/database");
 
-/**
+/*
  * 회원가입
  * 게시글쓰기
  * 유저ID로 유저이름 가져오기
