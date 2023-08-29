@@ -2,11 +2,13 @@ const Post = require('../models/posts');
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
 const db = require("../config/database");
+const User = require("../models/users");
 
-/*
+/**
  * 회원가입
  * 게시글쓰기
  * 유저ID로 유저이름 가져오기
+ * 모든 게시글 불러오기
  * 게시글ID로 게시글 불러오기
  */
 
@@ -41,7 +43,7 @@ exports.registerUser = (req, res) => {
 
         return res.status(201).json({ message: `Register Success. Your id is ${resData.user_id}` });
     });
-};
+}
 
 // 게시글쓰기
 exports.writePost = (req, res) => {
@@ -78,7 +80,7 @@ exports.writePost = (req, res) => {
             author_id: mysql.escape(user_id),
         }
 
-        Post.registerUser(reqData, (error, post_id) => {
+        Post.writePost(reqData, (error, post_id) => {
             if (error) {
                 console.error(error);
                 return res.status(500).json({ error: 'An error occurred' });
@@ -106,6 +108,7 @@ exports.getUserById = (req, res) => {
     });
 }
 
+// 모든 게시글 불러오기
 exports.getPostsAll = (req, res) => {
     const { offset, limit } = req.query;
 
@@ -143,7 +146,6 @@ exports.getPostsAll = (req, res) => {
         })
     })
 }
-
 /*exports.getPostsAll = (req, res) => {
     Post.getPostsAll((error, posts) => {
         if (error) {
@@ -172,6 +174,21 @@ exports.getPostById = (req, res) => {
 
         return res.status(200).json({ message: post });
     })
+}
+
+exports.deletePostById = (req, res) => {
+    const post_id = req.params.post_id;
+
+    Post.deletePostById(post_id, (error, post) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        return res.status(204).end();
+    });
 }
 
 /*// 회원 정보 추가

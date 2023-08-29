@@ -1,17 +1,19 @@
 const mysql = require('../config/database');
+const {devlog} = require("../config/config");
 
 /**
  * 회원가입
  * 게시글쓰기
  * 유저ID로 유저이름 가져오기
+ * 모든 게시글 불러오기
  * 게시글ID로 게시글 불러오기
  */
 
 // 회원가입
 exports.registerUser = (reqData, callback) => {
     const sql =
-        `INSERT INTO posts (author_id, title, author, content)
-        VALUES (${reqData.author_id}, ${reqData.title}, ${reqData.author}, ${reqData.content});`
+        `INSERT INTO users (email, username, password, phoneNumber)
+        VALUES (${reqData.email}, ${reqData.username}, ${reqData.password}, ${reqData.phoneNumber});`
     mysql.connection.query(sql, (error, results) => {
         if (error)  {
             // 에러
@@ -24,10 +26,9 @@ exports.registerUser = (reqData, callback) => {
 }
 
 // 게시글쓰기
-exports.writeUser = (reqData, callback) => {
-    const sql =
-        `INSERT INTO users (email, username, password, phoneNumber)
-        VALUES (${reqData.email}, ${reqData.username}, ${reqData.password}, ${reqData.phoneNumber});`
+exports.writePost = (reqData, callback) => {
+    const sql = `INSERT INTO posts (author_id, title, author, content)
+                VALUES (${reqData.author_id}, ${reqData.title}, ${reqData.author}, ${reqData.content});`;
     mysql.connection.query(sql, (error, results) => {
         if (error)  {
             // 에러
@@ -56,6 +57,7 @@ exports.getUserById = (user_id, callback) => {
     });
 }
 
+// 모든 게시글 불러오기
 exports.getPostsAll = (reqData, callback) => {
     console.log("[Model] getPostsAll in");
     const sql = `SELECT * FROM posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
@@ -70,8 +72,8 @@ exports.getPostsAll = (reqData, callback) => {
 
 // 게시글ID로 게시글 불러오기
 exports.getPostById = (post_id, callback) => {
-    const query = 'SELECT * FROM posts WHERE post_id = ?';
-    mysql.connection.query(query, post_id, (error, results) => {
+    const sql = 'SELECT * FROM posts WHERE post_id = ?';
+    mysql.connection.query(sql, post_id, (error, results) => {
         if (error) {
             return callback(error, null);
         }
@@ -82,6 +84,25 @@ exports.getPostById = (post_id, callback) => {
 
         return callback(null, results);
     });
+}
+
+exports.deletePostById = (post_id, callback) => {
+    console.log('post delete in');
+    const sql = `UPDATE posts SET deletedAt = ? WHERE id = ?;`;
+    const currentDate = new Date();
+
+    mysql.connection.query(sql, [currentDate, post_id], (error, results) => {
+        if (error) {
+            // console.error(error);
+            return callback(error, null);
+        }
+        if (results.length === 0) {
+            return callback(null, null); // 게시글 없을 경우 null 반환
+        }
+
+        console.log(`Post id ${post_id} has been deleted.`);
+        return callback(null, results);
+    })
 }
 
 /*

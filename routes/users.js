@@ -1,13 +1,15 @@
 const express = require('express');
 const usersController = require('../controllers/users');
-const isLoggendIn = require('../lib/middleware/auth').isLoggedIn;
+const isLoggendIn = require('../lib/auth').isLoggedIn;
+const isDeletedUser = require('../lib/auth').isDeletedUser;
 const router = express.Router();
 
-router.get('/users', isLoggendIn, usersController.loadUsers);           // Route for getting all users
-router.get('/users/logout', usersController.logoutUser);                // Route for User logout
-router.get('/users/check-auth', usersController.checkUserAuth);         // Route for delete user
-router.patch('/users', isLoggendIn, usersController.updateUser);        // Route for updating user
-router.post('/users/auth', usersController.loginUser);                  // Route for User login
-router.delete('/users', isLoggendIn, usersController.deleteUser);                    // Route for delete user
+router.get('/users', isLoggendIn, usersController.loadUsers);  // 유저 목록 불러오기 API
+router.get('/users/logout', isLoggendIn, usersController.logoutUser);  // 로그아웃 API
+router.get('/users/check-auth', usersController.checkUserAuth);  // 로그인 여부 확인 API
+router.patch('/users', isLoggendIn, usersController.updateUser);  // 유저 정보 업데이트 API
+router.post('/users/auth', isDeletedUser, usersController.loginUser);  // 로그인 API
+router.delete('/users', isLoggendIn, usersController.deleteUser);  // 유저 정보 삭제 API
+router.get('', usersController.getUserByEmail);  // 이메일로 유저정보 불러오기 API
 
 module.exports = router;

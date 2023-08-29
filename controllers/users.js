@@ -1,6 +1,7 @@
 const User = require("../models/users");
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
+const Post = require("../models/posts");
 
 /**
  * 회원 정보 목록 조회
@@ -9,6 +10,7 @@ const {devlog} = require("../config/config");
  * 회원 로그인
  * 회원 로그아웃
  * 로그인 상태 확인
+ * 이메일로 유저정보 가져오기
  */
 
 // 회원 정보 목록 조회
@@ -126,5 +128,22 @@ exports.checkUserAuth = (req, res) => {
         // 사용자가 로그인되어 있지 않은 경우
         res.status(401).json({ authenticated: false });
     }
+}
+
+// 이메일로 유저정보 가져오기
+exports.getUserByEmail = (req, res) => {
+    const email = req.params.email;
+
+    Post.getUserById(email, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: 'An error occurred' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    });
 }
 

@@ -6,6 +6,7 @@ const {devlog} = require("../config/config");
  * 회원 전화번호 업데이트
  * 회원 정보 삭제
  * 회원 로그인
+ * 이메일로 유저정보 가져오기
  */
 
 // 회원 정보 목록 조회
@@ -39,7 +40,7 @@ exports.updateUser = (reqData, callback) => {
 }
 
 // 회원 정보 삭제
-exports.deleteUser = (reqData) => {
+exports.deleteUser = (reqData, callback) => {
     console.log('delete in');
     devlog(`[Model] reqData.user_id = ${reqData.user_id}`);
     const {user_id} = reqData;
@@ -48,9 +49,11 @@ exports.deleteUser = (reqData) => {
 
     mysql.connection.query(sql, [currentDate, user_id], (error, result) => {
         if (error) {
-            console.error(error);
+            // console.error(error);
+            return callback(error, null);
         } else {
             console.log(`User with id ${user_id} has been deleted.`);
+            return callback(null, result);
         }
     })
 }
@@ -91,6 +94,23 @@ exports.loginUser = (reqData, callback) => {
         // console.log(`reqData.session = `, reqData.session);
         console.log(JSON.stringify(results, null, 2));
         return callback(null, results[0].id);
+    });
+}
+
+// 이메일로 유저정보 가져오기
+exports.getUserByEmail = (email, callback) => {
+    const query = 'SELECT * FROM users WHERE email = ?';
+    mysql.connection.query(query, email, (error, results) => {
+        if (error) {
+            return callback(error, null);
+        }
+
+        if (results.length === 0) {
+            return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
+        }
+
+        const user = results[0];
+        return callback(null, user);
     });
 }
 
