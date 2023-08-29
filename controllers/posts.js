@@ -1,7 +1,7 @@
 const Post = require('../models/posts');
 const mysql = require('mysql');
-const User = require("../models/users");
 const {devlog} = require("../config/config");
+const db = require("../config/database");
 
 /**
  * 회원가입
@@ -115,22 +115,33 @@ exports.getPostsAll = (req, res) => {
     if (!limit || isNaN(limit) || limit < 1) {
         return res.status(400).json({ code: 'invalid_limit' });
     }
+    // 총 게시글 수 조회 쿼리
+    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts;`;
 
-    const reqData = {
-        offset: offset,
-        limit: limit,
-    };
-
-    Post.getPostsAll(reqData, (error, posts) => {
+    db.connection.query(totalPostsQuery, (error, results) => {
         if (error) {
             console.log(error);
-            return res.status(500).json({ message: '내부 서버 오류' });
-        } else {
-            devlog(`getPostsAll Controllers`);
-            devlog(`resData = ${posts}`);
-            return res.status(200).json({ message: posts });
+            return res.status(500).json({message: '내부 서버 오류'});
         }
-    });
+
+        const totalPosts = results[0].totalPosts;
+
+        const reqData = {
+            offset: offset,
+            limit: limit,
+        };
+
+        Post.getPostsAll(reqData, (error, posts) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({message: '내부 서버 오류'});
+            } else {
+                devlog(`getPostsAll Controllers`);
+                devlog(`resData = ${posts}`);
+                return res.status(200).json({ totalPosts: totalPosts, message: posts});
+            }
+        })
+    })
 }
 
 /*exports.getPostsAll = (req, res) => {
