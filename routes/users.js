@@ -8,6 +8,6 @@ router.get('/users/logout', usersController.logoutUser);                // Route
 router.get('/users/check-auth', usersController.checkUserAuth);         // Route for delete user
 router.patch('/users', isLoggendIn, usersController.updateUser);        // Route for updating user
 router.post('/users/auth', usersController.loginUser);                  // Route for User login
-router.delete('/users', usersController.deleteUser);                    // Route for delete user
+router.delete('/users', isLoggendIn, usersController.deleteUser);                    // Route for delete user
 
 module.exports = router;
