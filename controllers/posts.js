@@ -1,8 +1,7 @@
 const Post = require('../models/posts');
 const mysql = require('mysql');
-const {devlog} = require("../config/config");
+const { devlog } = require("../config/config");
 const db = require("../config/database");
-const User = require("../models/users");
 
 /**
  * 회원가입

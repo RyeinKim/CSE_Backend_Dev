@@ -88,7 +88,7 @@ exports.getPostById = (post_id, callback) => {
 
 exports.deletePostById = (post_id, callback) => {
     console.log('post delete in');
-    const sql = `UPDATE posts SET deletedAt = ? WHERE id = ?;`;
+    const sql = `UPDATE posts SET deletedAt = ? WHERE post_id = ?;`;
     const currentDate = new Date();
 
     mysql.connection.query(sql, [currentDate, post_id], (error, results) => {
