@@ -7,6 +7,8 @@ const {devlog} = require("../config/config");
  * 유저ID로 유저이름 가져오기
  * 모든 게시글 불러오기
  * 게시글ID로 게시글 불러오기
+ * 게시글 ID 로 게시글 삭제하기
+ * 삭제된 게시글 불러오기
  */
 
 // 회원가입
@@ -86,7 +88,46 @@ exports.getPostById = (post_id, callback) => {
     });
 }
 
+// 게시글 ID 로 게시글 삭제하기
 exports.deletePostById = (post_id, callback) => {
+    console.log('post delete in');
+    const sql =
+            `UPDATE posts SET deletedAt = ? WHERE post_id = ?;
+            INSERT INTO delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
+            SELECT post_id, author_id, author, title, content, createAt, deletedAt
+            FROM posts
+            WHERE post_id = ?;
+            DELETE FROM posts
+            WHERE post_id = ?;`;
+    const currentDate = new Date();
+
+    mysql.connection.query(sql, [currentDate, post_id, post_id, post_id], (error, results) => {
+        if (error) {
+            return callback(error, null);
+        }
+        if (results.length === 0) {
+            return callback(null, null); // 게시글 없을 경우 null 반환
+        }
+
+        console.log(`Post id ${post_id} has been deleted.`);
+        return callback(null, results);
+    })
+}
+
+// 삭제된 게시글 불러오기
+exports.getDeletedPosts = (reqData, callback) => {
+    console.log("[Model] getDeletedPosts in");
+    const sql = `SELECT * FROM delete_posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
+    mysql.connection.query(sql, (error, results) => {
+        if (error) {
+            callback(error, null);
+        } else {
+            callback(null, results);
+        }
+    });
+}
+
+/*exports.deletePostById = (post_id, callback) => {
     console.log('post delete in');
     const sql = `UPDATE posts SET deletedAt = ? WHERE post_id = ?;`;
     const currentDate = new Date();
@@ -103,7 +144,7 @@ exports.deletePostById = (post_id, callback) => {
         console.log(`Post id ${post_id} has been deleted.`);
         return callback(null, results);
     })
-}
+}*/
 
 /*
 // 회원 정보 추가

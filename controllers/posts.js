@@ -6,9 +6,11 @@ const db = require("../config/database");
 /**
  * 회원가입
  * 게시글쓰기
- * 유저ID로 유저이름 가져오기
+ * 유저 ID로 유저이름 가져오기
  * 모든 게시글 불러오기
- * 게시글ID로 게시글 불러오기
+ * 게시글 ID로 게시글 불러오기
+ * 게시글 ID로 게시글 삭제하기
+ *
  */
 
 // 회원가입
@@ -90,7 +92,7 @@ exports.writePost = (req, res) => {
     });
 }
 
-// 유저ID로 유저이름 가져오기
+// 유저 ID로 유저이름 가져오기
 exports.getUserById = (req, res) => {
     const user_id = req.params.user_id;
 
@@ -158,7 +160,7 @@ exports.getPostsAll = (req, res) => {
     });
 }*/
 
-// 게시글ID로 게시글 불러오기
+// 게시글 ID로 게시글 불러오기
 exports.getPostById = (req, res) => {
     const post_id = req.params.post_id;
 
@@ -171,10 +173,11 @@ exports.getPostById = (req, res) => {
             return res.status(404).json({ message: 'Post not found' });
         }
 
-        return res.status(200).json({ message: post });
+        return res.status(200).json(post);
     })
 }
 
+// 게시글 ID로 게시글 삭제하기
 exports.deletePostById = (req, res) => {
     const post_id = req.params.post_id;
 
@@ -190,6 +193,45 @@ exports.deletePostById = (req, res) => {
     });
 }
 
+// 삭제된 게시글 불러오기
+exports.getDeletedPosts = (req, res) => {
+    const { offset, limit } = req.query;
+
+    if (!offset || isNaN(offset) || offset < 0) {
+        return res.status(400).json({ code: 'invalid_offset' });
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    // 총 게시글 수 조회 쿼리
+    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM delete_posts;`;
+
+    db.connection.query(totalPostsQuery, (error, results) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({message: '내부 서버 오류'});
+        }
+
+        const totalPosts = results[0].totalPosts;
+
+        const reqData = {
+            offset: offset,
+            limit: limit,
+        };
+
+        Post.getDeletedPosts(reqData, (error, posts) => {
+            if (error) {
+                console.log(error);
+                return res.status(500).json({message: '내부 서버 오류'});
+            } else {
+                devlog(`getDeletedPosts Controllers`);
+                devlog(`resData = ${posts}`);
+                return res.status(200).json({ totalPosts: totalPosts, message: posts});
+            }
+        })
+    })
+}
 /*// 회원 정보 추가
 exports.createUser = (req, res) => {
     const { email, username, password, phoneNumber } = req.body;
