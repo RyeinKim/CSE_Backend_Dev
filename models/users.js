@@ -114,6 +114,26 @@ exports.getUserByEmail = (email, callback) => {
     });
 }
 
+// 이메일 찾기
+exports.findUserEmail = (reqData, callback) => {
+    const { username, phonenum } = reqData;
+    const sql = `SELECT email FROM users WHERE username = ${username} && phoneNumber = ${phonenum}`;
+    mysql.connection.query(sql, (error, results) => {
+        if (error) {
+            devlog(`findUserEmail - Query 에러`);
+            return callback(error, null);
+        }
+
+        if (results.length === 0) {
+            devlog(`findUserEmail - 찾은 사용자 없음`);
+            return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
+        }
+
+        const user = results[0];
+        return callback(null, user);
+    });
+}
+
 /*
 exports.loadUsers = (reqData, callback) => {
     console.log("loadUsers in");

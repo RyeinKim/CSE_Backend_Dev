@@ -1,7 +1,6 @@
 const User = require("../models/users");
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
-const Post = require("../models/posts");
 
 /**
  * 회원 정보 목록 조회
@@ -134,13 +133,35 @@ exports.checkUserAuth = (req, res) => {
 exports.getUserByEmail = (req, res) => {
     const email = req.params.email;
 
-    Post.getUserById(email, (error, user) => {
+    User.getUserByEmail(email, (error, user) => {
         if (error) {
             return res.status(500).json({ error: 'An error occurred' });
         }
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    });
+}
+
+// 이메일 찾기
+exports.findUserEmail = (req, res) => {
+    const { username, phonenum } = req.body;
+
+    const reqData = {
+        username: username,
+        phonenum: phonenum
+    }
+
+    User.findUserEmail(reqData, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: '유저 정보 없음' });
         }
 
         return res.status(200).json(user);
