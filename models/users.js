@@ -157,19 +157,15 @@ exports.findUserEmail = (reqData, callback) => {
 // 비밀번호 찾기
 exports.checkUserPass = (reqData, callback) => {
     const { email, username, phonenum } = reqData;
-    console.log(`checkUserPass email = `, email);
-    console.log(`checkUserPass username = `, username);
-    console.log(`checkUserPass phonenum = `, phonenum);
-    const sql = 'SELECT * FROM users WHERE email = ? AND username = ? AND phoneNumber = ?';
+    const sql = 'SELECT id FROM users WHERE email = ? AND username = ? AND phoneNumber = ?';
     mysql.connection.query(sql, [email, username, String(phonenum)], (error, results) => {
         if (error) {
-            devlog(`checkUserPass findUserEmail - Query 에러`);
+            devlog(`findUserEmail - Query 에러`);
             return callback(error, null);
         }
-        devlog(`results = ${results}`);
-        devlog(`results.length = ${results.length}`);
+
         if (results.length === 0) {
-            devlog(`checkUserPass findUserEmail - 찾은 사용자 없음`);
+            devlog(`findUserEmail - 찾은 사용자 없음`);
             return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
         }
 
@@ -181,13 +177,7 @@ exports.checkUserPass = (reqData, callback) => {
 exports.changeUserPass = (reqData, callback) => {
     console.log("model IN!!!!!!!!!!!!!");
     const { email, username, phonenum, newPass } = reqData;
-    console.log(`changeUserPass email = `, email);
-    console.log(`changeUserPass username = `, username);
-    console.log(`changeUserPass phonenum = `, phonenum);
-    console.log(`changeUserPass newPass = `, newPass);
-    // const sql = `UPDATE users SET password = ? WHERE email = ? AND username = ? AND phoneNumber = ?;`;
-    // mysql.connection.query(sql, [String(newPass), email, username, String(phonenum)], (error, results) => {
-    const sql = 
+    const sql = 'UPDATE users SET password = ? WHERE email = ? AND username = ? AND phoneNumber = ?';
     mysql.connection.query(sql, [String(newPass), email, username, String(phonenum)], (error, results) => {
         if (error) {
             devlog(`findUserEmail - Query 에러`);
