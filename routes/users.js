@@ -14,6 +14,6 @@ router.delete('/users', isLoggendIn, usersController.deleteUser);  // 유저 정
 router.get('', usersController.getUserByEmail);  // 이메일로 유저정보 불러오기 API
 router.get('/users/findEmail', usersController.findUserEmail); // 이메일 찾기
 router.get('', usersController.checkUserPass); // 비밀번호 찾기 전 검증
-router.get('/users/changePass', isPassCheck, usersController.changeUserPass); // 비밀번호 변경
+router.patch('/users/changePass', isPassCheck, usersController.changeUserPass); // 비밀번호 변경
 
 module.exports = router;
