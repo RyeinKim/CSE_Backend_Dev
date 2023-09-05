@@ -168,3 +168,47 @@ exports.findUserEmail = (req, res) => {
     });
 }
 
+// 비밀번호 찾기
+exports.checkUserPass = (req, res) => {
+    const { email, username, phonenum } = req.body;
+    const reqData = {
+        email: email,
+        username: username,
+        phonenum: phonenum
+    }
+
+    User.checkUserPass(reqData, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: '유저 정보 없음' });
+        }
+
+        return res.status(200).json(user);
+    });
+}
+
+exports.changeUserPass = (req, res) => {
+    console.log("controller IN!!!!!!!!!!!!!");
+    const { email, username, phonenum, newPass } = req.body;
+    const reqData = {
+        email: email,
+        username: username,
+        phonenum: phonenum,
+        newPass: newPass
+    }
+
+    User.changeUserPass(reqData, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: '유저 정보 없음' });
+        }
+
+        return res.status(200).json(user);
+    });
+}
