@@ -12,7 +12,7 @@ router.patch('/users', isLoggendIn, usersController.updateUser);  // 유저 정�
 router.post('/users/auth', isDeletedUser, usersController.loginUser);  // 로그인 API
 router.delete('/users', isLoggendIn, usersController.deleteUser);  // 유저 정보 삭제 API
 router.get('', usersController.getUserByEmail);  // 이메일로 유저정보 불러오기 API
-router.get('/users/findEmail', usersController.findUserEmail); // 이메일 찾기
+router.post('/users/findEmail', usersController.findUserEmail); // 이메일 찾기
 router.get('', usersController.checkUserPass); // 비밀번호 찾기 전 검증
 router.get('/users/changePass', isPassCheck, usersController.changeUserPass); // 비밀번호 변경
 
