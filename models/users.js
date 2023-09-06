@@ -189,8 +189,8 @@ exports.changeUserPass = (reqData, callback) => {
             return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
         }
 
-        const user = results[0];
-        return callback(null, user);
+        // const user = results[0];
+        return callback(null, results);
     });
 }
 

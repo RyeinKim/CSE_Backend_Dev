@@ -202,14 +202,9 @@ exports.changeUserPass = (req, res) => {
 
     User.changeUserPass(reqData, (error, user) => {
         if (error) {
-            return res.status(500).json({ error: '내부 서버 오류' });
+            return res.status(500).json({ error: 'Database error.'});
         }
-
-        /*if (!user) {
-            return res.status(404).json({ error: '유저 정보 없음' });
-        }*/
-
-        return res.status(200).json(user);
+        return res.status(201).json({ message: `User's password changed successfully.` });
     });
 }
 
