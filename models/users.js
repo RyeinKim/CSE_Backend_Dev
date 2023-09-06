@@ -10,6 +10,7 @@ const {devlog} = require("../config/config");
  */
 
 // 회원 정보 목록 조회
+/*
 exports.loadUsers = (reqData, callback) => {
     console.log("[Model] loadUsers in");
     const sql = `SELECT * FROM users LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
@@ -20,6 +21,23 @@ exports.loadUsers = (reqData, callback) => {
             callback(null, results);
         }
     });
+}
+*/
+
+exports.loadUsers = (reqData) => {
+    return new Promise((resolve, reject) => {
+        console.log("[Model] loadUsers in");
+        const sql = `SELECT * FROM users LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
+        mysql.connection.query(sql, (error, results) => {
+            if (error) {
+                console.log('reject in');
+                reject(error);
+            } else {
+                console.log('resolve in');
+                resolve(results);
+            }
+        });
+    })
 }
 
 
