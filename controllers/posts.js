@@ -108,6 +108,21 @@ exports.getUserById = (req, res) => {
         return res.status(200).json(user);
     });
 }
+/*exports.getUserById = (req, res) => {
+    const user_id = req.params.user_id;
+
+    Post.getUserById(user_id, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: 'An error occurred' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    });
+}*/
 
 // 모든 게시글 불러오기
 exports.getPostsAll = (req, res) => {
