@@ -2,7 +2,6 @@ const mysql = require('../config/database');
 const {devlog} = require("../config/config");
 
 /**
- * 회원가입
  * 게시글쓰기
  * 유저ID로 유저이름 가져오기
  * 모든 게시글 불러오기
@@ -14,7 +13,7 @@ const {devlog} = require("../config/config");
 // 회원가입
 exports.registerUser = (reqData, callback) => {
     const sql =
-        `INSERT INTO users (email, username, password, phoneNumber)
+        `INSERT INTO users (email, username, password, pkoneNumber)
         VALUES (${reqData.email}, ${reqData.username}, ${reqData.password}, ${reqData.phoneNumber});`
     mysql.connection.query(sql, (error, results) => {
         if (error)  {

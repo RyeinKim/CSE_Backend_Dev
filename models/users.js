@@ -24,6 +24,7 @@ exports.loadUsers = (reqData, callback) => {
 }
 */
 
+
 exports.loadUsers = (reqData) => {
     return new Promise((resolve, reject) => {
         console.log("[Model] loadUsers in");
@@ -42,7 +43,7 @@ exports.loadUsers = (reqData) => {
 
 
 // 회원 전화번호 업데이트
-exports.updateUser = (reqData, callback) => {
+/*exports.updateUser = (reqData, callback) => {
     console.log('update in');
     console.log(`req.session = `, reqData.session);
     const sql = `UPDATE users SET phoneNumber='${reqData.phoneNumber}' WHERE email='${reqData.email}';`
@@ -55,10 +56,27 @@ exports.updateUser = (reqData, callback) => {
         }
         return callback(null, results);
     });
+}*/
+exports.updateUser = (reqData) => {
+    return new Promise((resolve, reject) => {
+        console.log('update in');
+        console.log(`req.session = `, reqData.session);
+        const sql = `UPDATE users SET phoneNumber='${reqData.phoneNumber}' WHERE email='${reqData.email}';`
+        mysql.connection.query(sql, (error, results) => {
+            if (error) {
+                reject(error);
+            }
+            if (results.affectedRows === 0) {
+                reject(null);
+            }
+            resolve(results);
+        });
+    })
 }
 
+
 // 회원 정보 삭제
-exports.deleteUser = (reqData, callback) => {
+/*exports.deleteUser = (reqData, callback) => {
     console.log('delete in');
     devlog(`[Model] reqData.user_id = ${reqData.user_id}`);
     const {user_id} = reqData;
@@ -74,21 +92,25 @@ exports.deleteUser = (reqData, callback) => {
             return callback(null, result);
         }
     })
-}
-/*exports.deleteUser = (reqData, callback) => {
-    console.log('delete in');
-    devlog(`[Model] reqData.user_id = ${reqData.user_id}`);
-    const sql = `DELETE FROM users WHERE id = ${reqData.user_id};`;
-    mysql.connection.query(sql, (error, results) => {
-        if (error) {
-            return callback(error, null);
-        }
-        if (results.affectedRows === 0) {
-            return callback(null, null);
-        }
-        return callback(null, 'deleted');
-    });
 }*/
+exports.deleteUser = (reqData) => {
+    return new Promise((resolve, reject) => {
+        console.log('delete in');
+        devlog(`[Model] reqData.user_id = ${reqData.user_id}`);
+        const {user_id} = reqData;
+        const currentDate = new Date();
+        const sql = `UPDATE users SET deleteAt = ? WHERE id = ?;`;
+
+        mysql.connection.query(sql, [currentDate, user_id], (error, result) => {
+            if (error) {
+                reject(error);
+            } else {
+                console.log(`User with id ${user_id} has been deleted.`);
+                resolve(error);
+            }
+        });
+    });
+}
 
 // 회원 로그인
 exports.loginUser = (reqData, callback) => {

@@ -2,11 +2,6 @@ const User = require("../models/users");
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
 
-
-
-
-
-
 /**
  * 회원 정보 목록 조회
  * 회원 전화번호 업데이트
@@ -33,6 +28,33 @@ exports.loadUsers = (req, res) => {
         limit: limit,
     };
 
+    User.loadUsers(reqData)
+        .then((resData) => {
+            devlog(`getUsers Controllers`);
+            devlog(`resData = ${resData}`);
+            return res.status(200).json({ message: resData });
+        })
+        .catch((error) => {
+            console.log(error);
+            return res.status(500).json({ message: '내부 서버 오류' });
+        });
+}
+/*
+exports.loadUsers = (req, res) => {
+    const { offset, limit } = req.query;
+
+    if (!offset || isNaN(offset) || offset < 0) {
+        return res.status(400).json({ code: 'invalid_offset' });
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    const reqData = {
+        offset: offset,
+        limit: limit,
+    };
+
     User.loadUsers(reqData, (error, resData) => {
         if (error) {
             console.log(error);
@@ -44,9 +66,10 @@ exports.loadUsers = (req, res) => {
         }
     });
 }
+*/
 
 // 회원 전화번호 업데이트
-exports.updateUser = (req, res) => {
+/*exports.updateUser = (req, res) => {
     console.log(`[Cont] updateUser req.session = `, req.session);
     const { email, phoneNumber } = req.body;
     console.log(`[Cont] updateUser email = `, email);
@@ -66,10 +89,33 @@ exports.updateUser = (req, res) => {
         }
         return res.status(201).json({ message: `User's phonenumber updated successfully.` });
     });
+}*/
+exports.updateUser = (req, res) => {
+    console.log(`[Cont] updateUser req.session = `, req.session);
+    const { email, phoneNumber } = req.body;
+    console.log(`[Cont] updateUser email = `, email);
+    console.log(`[Cont] updateUser phoneNumber = `, phoneNumber);
+    const reqData = {
+        email: email,
+        phoneNumber: phoneNumber
+    }
+
+    if (!email || !phoneNumber) {
+        return res.status(400).json({ error: 'Email, PhoneNumber are required.' });
+    }
+
+    User.updateUser(reqData)
+        .then((resData) => {
+            return res.status(201).json({ message: `User's phonenumber updated successfully.` });
+        })
+        .catch((error) => {
+            console.error(error);
+            return res.status(500).json({ error: '내부 서버 오류'});
+        });
 }
 
 // 회원 정보 삭제
-exports.deleteUser = (req, res) => {
+/*exports.deleteUser = (req, res) => {
     const user_id = req.session.user_id;
     if (!user_id) return res.status(400).json({ code: 'invalid_user_id' });
 
@@ -86,6 +132,25 @@ exports.deleteUser = (req, res) => {
         }
         return res.status(204).end();
     });
+}*/
+exports.deleteUser = (req, res) => {
+    const user_id = req.session.user_id;
+    if (!user_id) return res.status(400).json({ code: 'invalid_user_id' });
+
+    const reqData = {
+        user_id: mysql.escape(user_id)
+    };
+
+    User.deleteUser(reqData)
+        .then((resData) => {
+            if (resData === null) {
+                return res.status(404).json({ code: 'not_found_user' });
+            }
+            return res.status(204).end();
+        })
+        .catch((error) => {
+            return res.status(500).json({ error: 'Database error.' });
+        });
 }
 
 // 회원 로그인

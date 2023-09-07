@@ -1,6 +1,6 @@
 const Reply = require('../models/reply');
 const mysql = require('mysql');
-const Post = require("./posts");
+// const Post = require("./posts");
 const {devlog} = require("../config/config");
 
 /*
@@ -65,7 +65,7 @@ exports.writeReply = (req, res) => {
     }
 
     // user_id를 사용하여 사용자 정보 조회
-    Post.getUserById(user_id, (error, user) => {
+    Reply.getUserById(user_id, (error, user) => {
         if (error) {
             console.error(error);
             return res.status(500).json({ error: 'An error occurred' });
@@ -90,5 +90,21 @@ exports.writeReply = (req, res) => {
 
             return res.status(201).json({ message: `Upload post Success. Reply ID is ${reply_id}` });
         });
+    });
+}
+
+exports.getUserById = (req, res) => {
+    const user_id = req.params.user_id;
+
+    Reply.getUserById(user_id, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: 'An error occurred' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
     });
 }
