@@ -48,3 +48,18 @@ exports.getUserById = (user_id, callback) => {
         return callback(null, user);
     });
 }
+
+exports.getReplyByPostId = (post_id, callback) => {
+    const sql = 'SELECT * FROM reply WHERE post_id = ?';
+    mysql.connection.query(sql, post_id, (error, results) => {
+        if (error) {
+            return callback(error, null);
+        }
+
+        if (results.length === 0) {
+            return callback(null, null); // 게시글 없을 경우 null 반환
+        }
+
+        return callback(null, results);
+    });
+}
