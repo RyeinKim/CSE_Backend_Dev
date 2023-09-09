@@ -24,7 +24,6 @@ exports.loadUsers = (reqData, callback) => {
 }
 */
 
-
 exports.loadUsers = (reqData) => {
     return new Promise((resolve, reject) => {
         console.log("[Model] loadUsers in");

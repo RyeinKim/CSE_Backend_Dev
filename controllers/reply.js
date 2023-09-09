@@ -2,6 +2,7 @@ const Reply = require('../models/reply');
 const mysql = require('mysql');
 // const Post = require("./posts");
 const {devlog} = require("../config/config");
+const Post = require("../models/posts");
 
 /*
 exports.writeReply = (req, res) => {
@@ -109,6 +110,24 @@ exports.getUserById = (req, res) => {
     });
 }
 
+<<<<<<< HEAD
 /**
  * 수정중
  */
+=======
+exports.getReplyByPostId = (req, res) => {
+    const post_id = req.params.post_id;
+
+    Reply.getReplyByPostId(post_id, (error, post) => {
+        if (error) {
+            return res.status(500).json({ error: '내부 서버 오류' });
+        }
+
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+
+        return res.status(200).json(post);
+    })
+}
+>>>>>>> a8461eca04e024217fcde8a8a4d391c215ca58e9
