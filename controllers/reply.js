@@ -110,11 +110,6 @@ exports.getUserById = (req, res) => {
     });
 }
 
-<<<<<<< HEAD
-/**
- * 수정중
- */
-=======
 exports.getReplyByPostId = (req, res) => {
     const post_id = req.params.post_id;
 
@@ -130,4 +125,4 @@ exports.getReplyByPostId = (req, res) => {
         return res.status(200).json(post);
     })
 }
->>>>>>> a8461eca04e024217fcde8a8a4d391c215ca58e9
+
