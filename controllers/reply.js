@@ -1,8 +1,7 @@
 const Reply = require('../models/reply');
 const mysql = require('mysql');
-// const Post = require("./posts");
 const {devlog} = require("../config/config");
-const Post = require("../models/posts");
+const db = require("../config/database");
 
 /*
 exports.writeReply = (req, res) => {
@@ -111,18 +110,105 @@ exports.getUserById = (req, res) => {
 }
 
 exports.getReplyByPostId = (req, res) => {
+    // const { offset, limit } = req.query;
+    const limit = parseInt(req.query.limit); // 문자열을 숫자로 변환
+    let offset = parseInt(req.query.offset); // 문자열을 숫자로 변환
+
     const post_id = req.params.post_id;
 
-    Reply.getReplyByPostId(post_id, (error, post) => {
+    if (!offset || isNaN(offset) || offset < 0) {
+        offset = 0; // offset이 0 또는 음수일 경우 0으로 설정
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM reply;`;
+
+    db.connection.query(totalPostsQuery, (error, results) => {
         if (error) {
-            return res.status(500).json({ error: '내부 서버 오류' });
+            console.log(error);
+            console.log('reply / First 500 error');
+            return res.status(500).json({message: '내부 서버 오류'});
         }
 
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
+        const totalPosts = results[0].totalPosts;
+
+        const reqData = {
+            post_id: post_id,
+            offset: offset,
+            limit: limit,
+        };
+
+        Reply.getReplyByPostId(reqData, (error, reply) => {
+            if (error) {
+                console.error('MySQL Error:', error); // MySQL 오류 로그 추가
+                console.log('reply / Second 500 error');
+                return res.status(500).json({ error: '내부 서버 오류' });
+            }
+
+            if (!reply) {
+                return res.status(404).json({ message: 'Post not found' });
+            }
+
+            return res.status(200).json({
+                totalPosts: totalPosts,
+                message: reply
+            });
+        })
+    })
+}
+
+exports.getReplyByUserId = (req, res) => {
+    const limit = parseInt(req.query.limit);
+    let offset = parseInt(req.query.offset);
+
+    const { user_id } = req.session;
+
+    if (!offset || isNaN(offset) || offset < 0) {
+        offset = 0; // offset이 0 또는 음수일 경우 0으로 설정
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    if (!user_id) {
+        return res.status(401).json({ error: 'Authentication required.' });
+    }
+
+    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts;`;
+
+    db.connection.query(totalPostsQuery, (error, results) => {
+        if (error) {
+            console.log(error);
+            console.log('reply / First 500 error');
+            return res.status(500).json({message: '내부 서버 오류'});
         }
 
-        return res.status(200).json(post);
+        const totalPosts = results[0].totalPosts;
+
+        const reqData = {
+            post_id: post_id,
+            offset: offset,
+            limit: limit,
+        };
+
+        Reply.getReplyByPostId(reqData, (error, reply) => {
+            if (error) {
+                console.error('MySQL Error:', error); // MySQL 오류 로그 추가
+                console.log('reply / Second 500 error');
+                return res.status(500).json({ error: '내부 서버 오류' });
+            }
+
+            if (!reply) {
+                return res.status(404).json({ message: 'Post not found' });
+            }
+
+            return res.status(200).json({
+                totalPosts: totalPosts,
+                message: reply
+            });
+        })
     })
 }
 

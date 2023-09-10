@@ -13,7 +13,7 @@ const db = require("../config/database");
  *
  */
 
-// 회원가입
+// 회가입
 exports.registerUser = (req, res) => {
     const {email, username, password, phoneNumber } = req.body;
 

@@ -1,6 +1,5 @@
 const express = require('express');
 const replyController = require('../controllers/reply');
-const postsController = require("../controllers/posts");
 const isLoggedIn = require('../lib/auth').isLoggedIn;
 
 const router = express.Router();

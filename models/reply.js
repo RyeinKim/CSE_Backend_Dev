@@ -49,9 +49,30 @@ exports.getUserById = (user_id, callback) => {
     });
 }
 
-exports.getReplyByPostId = (post_id, callback) => {
-    const sql = 'SELECT * FROM reply WHERE post_id = ?';
-    mysql.connection.query(sql, post_id, (error, results) => {
+exports.getReplyByPostId = (reqData, callback) => {
+    devlog("Reply / getReplyByPostId in");
+
+    const { post_id, offset, limit } = reqData;
+    const sql = 'SELECT * FROM reply WHERE post_id = ? LIMIT ? OFFSET ?';
+    mysql.connection.query(sql, [post_id, limit, offset], (error, results) => {
+        if (error) {
+            return callback(error, null);
+        }
+
+        if (results.length === 0) {
+            return callback(null, null); // 게시글 없을 경우 null 반환
+        }
+
+        return callback(null, results);
+    });
+}
+
+exports.getReplyByUserId = (reqData, callback) => {
+    devlog("Reply / getReplyByPostId in");
+
+    const { post_id, offset, limit } = reqData;
+    const sql = 'SELECT * FROM reply WHERE post_id = ? LIMIT ? OFFSET ?';
+    mysql.connection.query(sql, [post_id, limit, offset], (error, results) => {
         if (error) {
             return callback(error, null);
         }
