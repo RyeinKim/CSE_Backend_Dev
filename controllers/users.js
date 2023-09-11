@@ -1,6 +1,6 @@
 const User = require("../models/users");
 const mysql = require('mysql');
-const {devlog} = require("../config/config");
+const { devlog } = require("../config/config");
 const userUtils = require("../utils/userUtils");
 
 /**
@@ -275,6 +275,26 @@ exports.checkUserPass = (req, res) => {
         phonenum: phonenum
     }
 
+    User.checkUserPass(reqData)
+        .then((user) => {
+            if (!user) {
+                return res.status(404).json({ error: '유저 정보 없음' });
+            }
+            return res.status(200).json(user);
+        })
+        .catch((error) => {
+            console.error(error);
+            return res.status(500).json({ error: '내부 서버 오류' });
+        })
+}
+/*exports.checkUserPass = (req, res) => {
+    const { email, username, phonenum } = req.body;
+    const reqData = {
+        email: email,
+        username: username,
+        phonenum: phonenum
+    }
+
     User.checkUserPass(reqData, (error, user) => {
         if (error) {
             return res.status(500).json({ error: '내부 서버 오류' });
@@ -286,7 +306,7 @@ exports.checkUserPass = (req, res) => {
 
         return res.status(200).json(user);
     });
-}
+}*/
 
 exports.changeUserPass = (req, res) => {
     console.log("controller IN!!!!!!!!!!!!!");

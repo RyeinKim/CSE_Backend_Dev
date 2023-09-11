@@ -1,5 +1,5 @@
 const mysql = require('../config/database');
-const {devlog, dev} = require("../config/config");
+const { devlog } = require("../config/config");
 
 /**
  * 회원 정보 목록 조회
@@ -98,6 +98,23 @@ exports.findUserEmail = (reqData, callback) => {
     });
 }
 */
+/*
+exports.loadUsers = (reqData) => {
+    return new Promise((resolve, reject) => {
+        console.log("[Model] loadUsers in");
+        const sql = `SELECT * FROM users LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
+        mysql.connection.query(sql, (error, results) => {
+            if (error) {
+                console.log('reject in');
+                reject(error);
+            } else {
+                console.log('resolve in');
+                resolve(results);
+            }
+        });
+    })
+}
+ */
 
 // 회원 정보 목록 조회
 exports.loadUsers = (reqData) => {
@@ -115,7 +132,6 @@ exports.loadUsers = (reqData) => {
         });
     })
 }
-
 
 // 회원 전화번호 업데이트
 exports.updateUser = (reqData) => {
@@ -205,7 +221,29 @@ exports.findUserEmail = (reqData) => {
 }
 
 // 비밀번호 찾기
-exports.checkUserPass = (reqData, callback) => {
+exports.checkUserPass = (reqData) => {
+    return new Promise((resolve, reject) => {
+        const { email, username, phonenum } = reqData;
+        const sql = 'SELECT id FROM users WHERE email = ? AND username = ? AND phoneNumber = ?';
+        mysql.connection.query(sql, [email, username, String(phonenum)], (error, results) => {
+            if (error) {
+                devlog(`findUserEmail - Query 에러`);
+                reject(error);
+            } else {
+                if (results.length === 0) {
+                    devlog(`findUserEmail - 찾은 사용자 없음`);
+                    resolve(null); // 사용자가 없을 경우 null을 반환합니다.
+                } else {
+                    const user = results[0];
+                    devlog(`user = ${results[0]}`);
+                    resolve(user);
+                }
+            }
+        });
+    })
+}
+
+/*exports.checkUserPass = (reqData, callback) => {
     const { email, username, phonenum } = reqData;
     const sql = 'SELECT id FROM users WHERE email = ? AND username = ? AND phoneNumber = ?';
     mysql.connection.query(sql, [email, username, String(phonenum)], (error, results) => {
@@ -221,26 +259,6 @@ exports.checkUserPass = (reqData, callback) => {
 
         const user = results[0];
         return callback(null, user);
-    });
-}
-
-/*exports.changeUserPass = (reqData, callback) => {
-    console.log("model IN!!!!!!!!!!!!!");
-    const { email, username, phonenum, newPass } = reqData;
-    const sql = 'UPDATE users SET password = ? WHERE email = ? AND username = ? AND phoneNumber = ?';
-    mysql.connection.query(sql, [String(newPass), email, username, String(phonenum)], (error, results) => {
-        if (error) {
-            devlog(`findUserEmail - Query 에러`);
-            return callback(error, null);
-        }
-
-        if (results.length === 0) {
-            devlog(`findUserEmail - 찾은 사용자 없음`);
-            return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
-        }
-
-        // const user = results[0];
-        return callback(null, results);
     });
 }*/
 
