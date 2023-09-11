@@ -2,6 +2,7 @@ const Reply = require('../models/reply');
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
 const db = require("../config/database");
+const replyUtils = require("../utils/replyUtils");
 
 /*
 exports.writeReply = (req, res) => {
@@ -65,7 +66,7 @@ exports.writeReply = (req, res) => {
     }
 
     // user_id를 사용하여 사용자 정보 조회
-    Reply.getUserById(user_id, (error, user) => {
+    replyUtils.getUserById(user_id, (error, user) => {
         if (error) {
             console.error(error);
             return res.status(500).json({ error: 'An error occurred' });
@@ -96,7 +97,7 @@ exports.writeReply = (req, res) => {
 exports.getUserById = (req, res) => {
     const user_id = req.params.user_id;
 
-    Reply.getUserById(user_id, (error, user) => {
+    replyUtils.getUserById(user_id, (error, user) => {
         if (error) {
             return res.status(500).json({ error: 'An error occurred' });
         }
@@ -108,6 +109,21 @@ exports.getUserById = (req, res) => {
         return res.status(200).json(user);
     });
 }
+/*exports.getUserById = (req, res) => {
+    const user_id = req.params.user_id;
+
+    Reply.getUserById(user_id, (error, user) => {
+        if (error) {
+            return res.status(500).json({ error: 'An error occurred' });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    });
+}*/
 
 exports.getReplyByPostId = (req, res) => {
     // const { offset, limit } = req.query;

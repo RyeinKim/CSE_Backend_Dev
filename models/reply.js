@@ -33,7 +33,7 @@ exports.writeReply = (reqData, callback) => {
     });
 }
 
-exports.getUserById = (user_id, callback) => {
+/*exports.getUserById = (user_id, callback) => {
     const query = 'SELECT * FROM users WHERE id = ?';
     mysql.connection.query(query, user_id, (error, results) => {
         if (error) {
@@ -47,7 +47,7 @@ exports.getUserById = (user_id, callback) => {
         const user = results[0];
         return callback(null, user);
     });
-}
+}*/
 
 exports.getReplyByPostId = (reqData, callback) => {
     devlog("Reply / getReplyByPostId in");

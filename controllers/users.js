@@ -1,6 +1,7 @@
 const User = require("../models/users");
 const mysql = require('mysql');
 const {devlog} = require("../config/config");
+const userUtils = require("../utils/userUtils");
 
 /**
  * 회원 정보 목록 조회
@@ -146,6 +147,7 @@ exports.deleteUser = (req, res) => {
             if (resData === null) {
                 return res.status(404).json({ code: 'not_found_user' });
             }
+            req.session.destroy();
             return res.status(204).end();
         })
         .catch((error) => {
@@ -162,7 +164,33 @@ exports.loginUser = (req, res) => {
         email: email,
         password: password
     }
-    // console.log(`reqData = `, reqData);
+    devlog(`reqData = `, reqData);
+
+    User.loginUser(reqData)
+        .then((resData) => {
+            if (resData === null) {
+                return res.status(401).json({ error: 'invalid email or password' });
+            }
+            req.session.user_id = resData;
+            devlog(`[B] req.sessionID = ${req.sessionID}`);
+            devlog(`[B] req.session.user_id = ${req.session.user_id}`);
+            return res.status(200).json({ user_id: resData, session_id: req.sessionID });
+        })
+        .catch((error) => {
+            console.error(error);
+            return res.status(500).json({ error: 'An error occurred' });
+        })
+}
+/*exports.loginUser = (req, res) => {
+    const { email, password } = req.body;
+    devlog(`email = ${email}`);
+    devlog(`password = ${password}`);
+    const reqData = {
+        email: email,
+        password: password
+    }
+    devlog(`reqData = `, reqData);
+
     User.loginUser(reqData, (error, resData) => {
         if (error) {
             return res.status(500).json({ error: 'An error occurred' });
@@ -177,7 +205,7 @@ exports.loginUser = (req, res) => {
         devlog(`[B] req.session.user_id = ${req.session.user_id}`);
         return res.status(200).json({ user_id: resData, session_id: req.sessionID });
     });
-}
+}*/
 
 // 회원 로그아웃
 exports.logoutUser = (req, res) => {
@@ -203,7 +231,7 @@ exports.checkUserAuth = (req, res) => {
 exports.getUserByEmail = (req, res) => {
     const email = req.params.email;
 
-    User.getUserByEmail(email, (error, user) => {
+    userUtils.getUserByEmail(email, (error, user) => {
         if (error) {
             return res.status(500).json({ error: 'An error occurred' });
         }
@@ -225,17 +253,17 @@ exports.findUserEmail = (req, res) => {
         phonenum: phonenum
     }
 
-    User.findUserEmail(reqData, (error, user) => {
-        if (error) {
+    User.findUserEmail(reqData)
+        .then((user) => {
+            if (!user) {
+                return res.status(404).json({ error: '유저 정보 없음' });
+            }
+            return res.status(200).json(user);
+        })
+        .catch((error) => {
+            console.error(error);
             return res.status(500).json({ error: '내부 서버 오류' });
-        }
-
-        if (!user) {
-            return res.status(404).json({ error: '유저 정보 없음' });
-        }
-
-        return res.status(200).json(user);
-    });
+        })
 }
 
 // 비밀번호 찾기
@@ -270,7 +298,7 @@ exports.changeUserPass = (req, res) => {
         newPass: newPass
     }
 
-    User.changeUserPass(reqData, (error, user) => {
+    userUtils.changeUserPass(reqData, (error, user) => {
         if (error) {
             return res.status(500).json({ error: 'Database error.'});
         }
