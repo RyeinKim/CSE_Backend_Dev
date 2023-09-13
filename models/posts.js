@@ -33,34 +33,44 @@ exports.registerUser = async (reqData) => {
 }
 
 // 게시글쓰기
-exports.writePost = (reqData, callback) => {
+exports.writePost = async (reqData) => {
     const sql = `INSERT INTO posts (author_id, title, author, content)
                 VALUES (${reqData.author_id}, ${reqData.title}, ${reqData.author}, ${reqData.content});`;
-    mysql.connection.query(sql, (error, results) => {
-        if (error)  {
-            // 에러
-            console.error(error);
-            callback(error, null);
-        } else {
-            callback(null, results.insertId);
-        }
-    });
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, (error, results) => {
+                if (error) {
+                    // 에러
+                    console.error(error);
+                    return reject(error);
+                }
+                return resolve(results.insertId);
+            });
+        });
+
+    } catch (error) {
+        throw error;
+    }
 }
 
 // 유저ID로 유저이름 가져오기
-exports.getUserById = (user_id, callback) => {
+exports.getUserById = async (user_id) => {
     const query = 'SELECT * FROM users WHERE id = ?';
-    mysql.connection.query(query, user_id, (error, results) => {
-        if (error) {
-            return callback(error, null);
-        }
 
-        if (results.length === 0) {
-            return callback(null, null); // 사용자가 없을 경우 null을 반환합니다.
-        }
-
-        const user = results[0];
-        return callback(null, user);
+    return new Promise((resolve, reject) => {
+        mysql.connection.query(query, user_id, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    const user = results[0];
+                    resolve(user);
+                }
+            }
+        });
     });
 }
 

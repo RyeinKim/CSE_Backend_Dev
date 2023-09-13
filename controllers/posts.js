@@ -37,16 +37,16 @@ exports.registerUser = async (req, res) => {
     }
 }
 
-// 게시글쓰기
-exports.writePost = (req, res) => {
+// 게시글 쓰기
+exports.writePost = async (req, res) => {
     const { title, content } = req.body;
     const { user_id } = req.session; // 로그인한 사용자의 user_id
 
-    if (!title || title === null) {
+    if (!title) {
         return res.status(400).json({ error: 'Title is required.' });
     }
 
-    if (!content || content === null) {
+    if (!content) {
         return res.status(400).json({ error: 'Content is required.' });
     }
 
@@ -54,12 +54,9 @@ exports.writePost = (req, res) => {
         return res.status(401).json({ error: 'Authentication required.' });
     }
 
-    // user_id를 사용하여 사용자 정보 조회
-    Post.getUserById(user_id, (error, user) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json({ error: 'An error occurred' });
-        }
+    try {
+        // user_id를 사용하여 사용자 정보 조회
+        const user = await Post.getUserById(user_id);
 
         if (!user) {
             return res.status(401).json({ error: 'User not found.' });
@@ -70,34 +67,33 @@ exports.writePost = (req, res) => {
             content: mysql.escape(content),
             author: mysql.escape(user.username), // 사용자 정보에서 username 사용
             author_id: mysql.escape(user_id),
-        }
+        };
 
-        Post.writePost(reqData, (error, post_id) => {
-            if (error) {
-                console.error(error);
-                return res.status(500).json({ error: 'An error occurred' });
-            }
+        // 게시글 작성
+        const post_id = await Post.writePost(reqData);
 
-            return res.status(201).json({ message: `Upload post Success. Post ID is ${post_id}` });
-        });
-    });
+        return res.status(201).json({ message: `Upload post Success. Post ID is ${post_id}` });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'An error occurred' });
+    }
 }
 
-// 유저 ID로 유저이름 가져오기
-exports.getUserById = (req, res) => {
+// 유저 ID로 유저 이름 가져오기
+exports.getUserById = async (req, res) => {
     const user_id = req.params.user_id;
 
-    Post.getUserById(user_id, (error, user) => {
-        if (error) {
-            return res.status(500).json({ error: 'An error occurred' });
-        }
+    try {
+        const user = await Post.getUserById(user_id);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
         return res.status(200).json(user);
-    });
+    } catch (error) {
+        return res.status(500).json({ error: 'An error occurred' });
+    }
 }
 /*exports.getUserById = (req, res) => {
     const user_id = req.params.user_id;
