@@ -14,14 +14,10 @@ const db = require("../config/database");
  */
 
 // 회원가입
-exports.registerUser = (req, res) => {
-    const {email, username, password, phoneNumber } = req.body;
+exports.registerUser = async (req, res) => {
+    const { email, username, password, phoneNumber } = req.body;
 
     if (!email || !username || !password || !phoneNumber) {
-        return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
-    }
-
-    if (email === null || username === null || password === null || phoneNumber === null) {
         return res.status(400).json({ error: 'Email, Username, Password, PhoneNumber are required.' });
     }
 
@@ -32,18 +28,13 @@ exports.registerUser = (req, res) => {
         phoneNumber: mysql.escape(phoneNumber)
     }
 
-    Post.registerUser(reqData, (error, user_id) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json({ error: 'An error occurred' });
-        }
-
-        const resData = {
-            user_id: user_id
-        };
-
-        return res.status(201).json({ message: `Register Success. Your id is ${resData.user_id}` });
-    });
+    try {
+        const user_id = await Post.registerUser(reqData);
+        return res.status(201).json({ message: `Register Success. Your id is ${user_id}` });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'An error occurred' });
+    }
 }
 
 // 게시글쓰기

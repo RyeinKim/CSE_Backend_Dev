@@ -13,7 +13,7 @@ const {devlog} = require("../config/config");
 // 회원가입
 exports.registerUser = async (reqData) => {
     const sql =
-        `INSERT INTO users (email, username, password, pkoneNumber)
+        `INSERT INTO users (email, username, password, phoneNumber)
         VALUES (${reqData.email}, ${reqData.username}, ${reqData.password}, ${reqData.phoneNumber});`
 
     try {
