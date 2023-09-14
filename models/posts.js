@@ -48,7 +48,7 @@ exports.writePost = async (reqData) => {
                 return resolve(results.insertId);
             });
         });
-
+        return results;
     } catch (error) {
         throw error;
     }
@@ -75,58 +75,79 @@ exports.getUserById = async (user_id) => {
 }
 
 // 모든 게시글 불러오기
-exports.getPostsAll = (reqData, callback) => {
+exports.getPostsAll = async (reqData) => {
     console.log("[Model] getPostsAll in");
-    const sql = `SELECT * FROM posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
-    mysql.connection.query(sql, (error, results) => {
-        if (error) {
-            callback(error, null);
-        } else {
-            callback(null, results);
-        }
-    });
+    const sql = `SELECT * FROM posts LIMIT ? OFFSET ?;`;
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [reqData.limit, reqData.offset], (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // 게시글ID로 게시글 불러오기
-exports.getPostById = (post_id, callback) => {
+exports.getPostById = async (post_id) => {
     const sql = 'SELECT * FROM posts WHERE post_id = ?';
-    mysql.connection.query(sql, post_id, (error, results) => {
-        if (error) {
-            return callback(error, null);
-        }
 
-        if (results.length === 0) {
-            return callback(null, null); // 게시글 없을 경우 null 반환
-        }
+    try {
+        const results = await new Promise ((resolve, reject) => {
+            mysql.connection.query(sql, post_id, (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
 
-        return callback(null, results);
-    });
+                if (results.length === 0) {
+                    return resolve(null);
+                }
+
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // 게시글 ID 로 게시글 삭제하기
-exports.deletePostById = (post_id, callback) => {
+exports.deletePostById = async (post_id) => {
     console.log('post delete in');
-    const sql =
-            `UPDATE posts SET deletedAt = ? WHERE post_id = ?;
-            INSERT INTO delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
-            SELECT post_id, author_id, author, title, content, createAt, deletedAt
-            FROM posts
-            WHERE post_id = ?;
-            DELETE FROM posts
-            WHERE post_id = ?;`;
     const currentDate = new Date();
+    const sql = `UPDATE posts SET deletedAt = ? WHERE post_id = ?;
+                 INSERT INTO delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
+                 SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
+                 FROM posts
+                 WHERE post_id = ?;
+                 DELETE FROM posts
+                 WHERE post_id = ?;`;
 
-    mysql.connection.query(sql, [currentDate, post_id, post_id, post_id], (error, results) => {
-        if (error) {
-            return callback(error, null);
-        }
-        if (results.length === 0) {
-            return callback(null, null); // 게시글 없을 경우 null 반환
-        }
-
-        console.log(`Post id ${post_id} has been deleted.`);
-        return callback(null, results);
-    })
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [currentDate, post_id, currentDate, post_id, post_id], (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                const affectedRows = results[results.length - 1].affectedRows;
+                if (affectedRows === 0) {
+                    return resolve(null);
+                }
+                devlog(`Post id ${post_id} has been deleted.`);
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // 삭제된 게시글 불러오기

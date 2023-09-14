@@ -10,7 +10,6 @@ const db = require("../config/database");
  * 모든 게시글 불러오기
  * 게시글 ID로 게시글 불러오기
  * 게시글 ID로 게시글 삭제하기
- *
  */
 
 // 회원가입
@@ -95,21 +94,6 @@ exports.getUserById = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred' });
     }
 }
-/*exports.getUserById = (req, res) => {
-    const user_id = req.params.user_id;
-
-    Post.getUserById(user_id, (error, user) => {
-        if (error) {
-            return res.status(500).json({ error: 'An error occurred' });
-        }
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        return res.status(200).json(user);
-    });
-}*/
 
 // 모든 게시글 불러오기
 exports.getPostsAll = (req, res) => {
@@ -149,50 +133,36 @@ exports.getPostsAll = (req, res) => {
         })
     })
 }
-/*exports.getPostsAll = (req, res) => {
-    Post.getPostsAll((error, posts) => {
-        if (error) {
-            console.log(error);
-            return res.status(500).json({ message: '내부 서버 오류' });
-        } else {
-            devlog(`getUsers Controllers`);
-            devlog(`resData = ${posts}`);
-            return res.status(200).json({ message: posts });
-        }
-    });
-}*/
+
 
 // 게시글 ID로 게시글 불러오기
-exports.getPostById = (req, res) => {
+exports.getPostById = async (req, res) => {
     const post_id = req.params.post_id;
 
-    Post.getPostById(post_id, (error, post) => {
-        if (error) {
-            return res.status(500).json({ error: '내부 서버 오류' });
-        }
-
+    try {
+        const post = await Post.getPostById(post_id);
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
-
         return res.status(200).json(post);
-    })
+    } catch (error) {
+        return res.status(500).json({ error: '내부 서버 오류' });
+    }
 }
 
 // 게시글 ID로 게시글 삭제하기
-exports.deletePostById = (req, res) => {
+exports.deletePostById = async (req, res) => {
     const post_id = req.params.post_id;
 
-    Post.deletePostById(post_id, (error, post) => {
-        if (error) {
-            return res.status(500).json({ error: '내부 서버 오류' });
-        }
-
+    try {
+        const post = await Post.deletePostById(post_id);
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
         return res.status(204).end();
-    });
+    } catch (error) {
+        return res.status(500).json({ error: '내부 서버 오류' });
+    }
 }
 
 // 삭제된 게시글 불러오기
