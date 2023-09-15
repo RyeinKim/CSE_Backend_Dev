@@ -76,7 +76,7 @@ exports.getUserById = async (user_id) => {
 
 // 모든 게시글 불러오기
 exports.getPostsAll = async (reqData) => {
-    console.log("[Model] getPostsAll in");
+    devlog("[Model] getPostsAll in");
     const sql = `SELECT * FROM posts LIMIT ? OFFSET ?;`;
 
     try {
@@ -151,16 +151,24 @@ exports.deletePostById = async (post_id) => {
 }
 
 // 삭제된 게시글 불러오기
-exports.getDeletedPosts = (reqData, callback) => {
-    console.log("[Model] getDeletedPosts in");
+exports.getDeletedPosts = async (reqData) => {
+    devlog("[Model] getDeletedPosts in");
     const sql = `SELECT * FROM delete_posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
-    mysql.connection.query(sql, (error, results) => {
-        if (error) {
-            callback(error, null);
-        } else {
-            callback(null, results);
-        }
-    });
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+
+    }
+
 }
 
 /*exports.deletePostById = (post_id, callback) => {

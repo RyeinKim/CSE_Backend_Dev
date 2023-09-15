@@ -42,7 +42,7 @@ exports.writeReply = async (reqData) => {
     try {
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, (error, results) => {
-                if (errorW)  {
+                if (error)  {
                     console.error(error);
                     return reject(error);
                 }
@@ -53,18 +53,17 @@ exports.writeReply = async (reqData) => {
     } catch (error) {
         throw error;
     }
-
 }
 
 exports.getReplyByPostId = async (reqData) => {
     devlog("Reply / getReplyByPostId in");
 
-    const { post_id, offset, limit } = reqData;
-    const sql = 'SELECT * FROM reply WHERE post_id = ? LIMIT ? OFFSET ?';
+    const { post_id } = reqData;
+    const sql = 'SELECT * FROM reply WHERE post_id = ?;';
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [post_id, limit, offset], (error, results) => {
+            mysql.connection.query(sql, post_id, (error, results) => {
                 if (error) {
                     return reject(error);
                 }
@@ -82,20 +81,28 @@ exports.getReplyByPostId = async (reqData) => {
     }
 }
 
-exports.getReplyByUserId = (reqData, callback) => {
-    devlog("Reply / getReplyByPostId in");
+exports.getReplyByUserId = async (reqData) => {
+    devlog("Reply / getReplyByUserId in");
 
-    const { post_id, offset, limit } = reqData;
-    const sql = 'SELECT * FROM reply WHERE post_id = ? LIMIT ? OFFSET ?';
-    mysql.connection.query(sql, [post_id, limit, offset], (error, results) => {
-        if (error) {
-            return callback(error, null);
-        }
+    const { post_id } = reqData;
+    const sql = 'SELECT * FROM reply WHERE user_id = ?';
 
-        if (results.length === 0) {
-            return callback(null, null); // 게시글 없을 경우 null 반환
-        }
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, user_id, (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
 
-        return callback(null, results);
-    });
+                if (results.length === 0) {
+                    return resolve(null); // 게시글 없을 경우 null 반환
+                }
+
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }

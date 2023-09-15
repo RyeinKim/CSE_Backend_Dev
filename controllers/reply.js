@@ -171,17 +171,7 @@ exports.getUserById = (req, res) => {
 }
 
 exports.getReplyByPostId = async (req, res) => {
-    const limit = parseInt(req.query.limit); // 문자열을 숫자로 변환
-    let offset = parseInt(req.query.offset); // 문자열을 숫자로 변환
-
     const post_id = req.params.post_id;
-
-    if (!offset || isNaN(offset) || offset < 0) {
-        offset = 0; // offset이 0 또는 음수일 경우 0으로 설정
-    }
-    if (!limit || isNaN(limit) || limit < 1) {
-        return res.status(400).json({ code: 'invalid_limit' });
-    }
 
     try {
         const totalPostsResults = await new Promise((resolve, reject) => {
@@ -196,8 +186,6 @@ exports.getReplyByPostId = async (req, res) => {
 
         const reqData = {
             post_id: post_id,
-            offset: offset,
-            limit: limit,
         };
 
         const reply = await Reply.getReplyByPostId(reqData);
@@ -217,56 +205,41 @@ exports.getReplyByPostId = async (req, res) => {
 }
 
 
-exports.getReplyByUserId = (req, res) => {
-    const limit = parseInt(req.query.limit);
-    let offset = parseInt(req.query.offset);
-
+exports.getReplyByUserId = async (req, res) => {
     const { user_id } = req.session;
-
-    if (!offset || isNaN(offset) || offset < 0) {
-        offset = 0; // offset이 0 또는 음수일 경우 0으로 설정
-    }
-    if (!limit || isNaN(limit) || limit < 1) {
-        return res.status(400).json({ code: 'invalid_limit' });
-    }
 
     if (!user_id) {
         return res.status(401).json({ error: 'Authentication required.' });
     }
 
-    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts;`;
+    try {
+        const totalPostsResults = await new Promise((resolve, reject) => {
+            const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM reply;`;
+            db.connection.query(totalPostsQuery, (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
 
-    db.connection.query(totalPostsQuery, (error, results) => {
-        if (error) {
-            console.log(error);
-            console.log('reply / First 500 error');
-            return res.status(500).json({message: '내부 서버 오류'});
-        }
-
-        const totalPosts = results[0].totalPosts;
+        const totalPosts = totalPostsResults[0].totalPosts;
 
         const reqData = {
-            post_id: post_id,
-            offset: offset,
-            limit: limit,
+            user_id: user_id,
         };
 
-        Reply.getReplyByPostId(reqData, (error, reply) => {
-            if (error) {
-                console.error('MySQL Error:', error); // MySQL 오류 로그 추가
-                console.log('reply / Second 500 error');
-                return res.status(500).json({ error: '내부 서버 오류' });
-            }
+        const reply = await Reply.getReplyByUserId(reqData);
 
-            if (!reply) {
-                return res.status(404).json({ message: 'Post not found' });
-            }
+        if (!reply) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
 
-            return res.status(200).json({
-                totalPosts: totalPosts,
-                message: reply
-            });
-        })
-    })
+        return res.status(200).json({
+            totalPosts: totalPosts,
+            message: reply
+        });
+    } catch (error) {
+        console.error('MySQL Error:', error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
 }
 

@@ -96,43 +96,46 @@ exports.getUserById = async (req, res) => {
 }
 
 // 모든 게시글 불러오기
-exports.getPostsAll = (req, res) => {
-    const { offset, limit } = req.query;
+exports.getPostsAll = async (req, res) => {
+    const offset = parseInt(req.query.offset);
+    const limit = parseInt(req.query.limit);
 
-    if (!offset || isNaN(offset) || offset < 0) {
+    if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
         return res.status(400).json({ code: 'invalid_offset' });
     }
     if (!limit || isNaN(limit) || limit < 1) {
         return res.status(400).json({ code: 'invalid_limit' });
     }
-    // 총 게시글 수 조회 쿼리
-    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts;`;
 
-    db.connection.query(totalPostsQuery, (error, results) => {
-        if (error) {
-            console.log(error);
-            return res.status(500).json({message: '내부 서버 오류'});
-        }
+    try {
+        const totalPostsResults = await new Promise((resolve, reject) => {
+            const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts;`;
+            db.connection.query(totalPostsQuery, (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
 
-        const totalPosts = results[0].totalPosts;
+        const totalPosts = totalPostsResults[0].totalPosts;
 
         const reqData = {
             offset: offset,
             limit: limit,
         };
 
-        Post.getPostsAll(reqData, (error, posts) => {
-            if (error) {
-                console.log(error);
-                return res.status(500).json({message: '내부 서버 오류'});
-            } else {
-                devlog(`getPostsAll Controllers`);
-                devlog(`resData = ${posts}`);
-                return res.status(200).json({ totalPosts: totalPosts, message: posts});
-            }
-        })
-    })
+        const posts = await Post.getPostsAll(reqData);
+
+        devlog(`getPostsAll Controllers`);
+        devlog(`resData = ${posts}`);
+
+        return res.status(200).json({ totalPosts: totalPosts, message: posts });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message: '내부 서버 오류'});
+    }
 }
+
 
 
 // 게시글 ID로 게시글 불러오기
@@ -166,43 +169,42 @@ exports.deletePostById = async (req, res) => {
 }
 
 // 삭제된 게시글 불러오기
-exports.getDeletedPosts = (req, res) => {
-    const { offset, limit } = req.query;
+exports.getDeletedPosts = async (req, res) => {
+    const offset = parseInt(req.query.offset);
+    const limit = parseInt(req.query.limit);
 
-    if (!offset || isNaN(offset) || offset < 0) {
+    if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
         return res.status(400).json({ code: 'invalid_offset' });
     }
     if (!limit || isNaN(limit) || limit < 1) {
         return res.status(400).json({ code: 'invalid_limit' });
     }
 
-    // 총 게시글 수 조회 쿼리
-    const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM delete_posts;`;
+    try {
+        const totalDelPostsResults = await new Promise((resolve, reject) => {
+            const totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM delete_posts;`;
+            db.connection.query(totalDelPostsQuery, (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
 
-    db.connection.query(totalPostsQuery, (error, results) => {
-        if (error) {
-            console.log(error);
-            return res.status(500).json({message: '내부 서버 오류'});
-        }
-
-        const totalPosts = results[0].totalPosts;
+        const totalPosts = totalDelPostsResults[0].totalPosts;
 
         const reqData = {
             offset: offset,
             limit: limit,
         };
 
-        Post.getDeletedPosts(reqData, (error, posts) => {
-            if (error) {
-                console.log(error);
-                return res.status(500).json({message: '내부 서버 오류'});
-            } else {
-                devlog(`getDeletedPosts Controllers`);
-                devlog(`resData = ${posts}`);
-                return res.status(200).json({ totalPosts: totalPosts, message: posts});
-            }
-        })
-    })
+        const posts = await Post.getDeletedPosts(reqData);
+        devlog(`getDeletedPosts Controllers`);
+        devlog(`resData = ${posts}`);
+        return res.status(200).json({ totalPosts: totalPosts, message: posts });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({message: '내부 서버 오류'});
+    }
 }
 
 /*
