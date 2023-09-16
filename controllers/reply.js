@@ -113,7 +113,7 @@ exports.getReplyByPostId = (req, res) => {
 }
  */
 
-exports.writeReply = (req, res) => {
+exports.writeReply = async (req, res) => {
     const { reply, post_id } = req.body;
     const { user_id } = req.session;
 
@@ -125,12 +125,8 @@ exports.writeReply = (req, res) => {
         return res.status(401).json({ error: 'Authentication required.' });
     }
 
-    // user_id를 사용하여 사용자 정보 조회
-    replyUtils.getUserById(user_id, (error, user) => {
-        if (error) {
-            console.error(error);
-            return res.status(500).json({ error: 'An error occurred' });
-        }
+    try {
+        const user = await replyUtils.getUserById(user_id);
 
         if (!user) {
             return res.status(401).json({ error: 'User not found.' });
@@ -143,31 +139,28 @@ exports.writeReply = (req, res) => {
             user_id: mysql.escape(user_id),
         }
 
-        Reply.writeReply(reqData, (error, reply_id) => {
-            if (error) {
-                console.error(error);
-                return res.status(500).json({ error: 'An error occurred' });
-            }
-
-            return res.status(201).json({ message: `Upload post Success. Reply ID is ${reply_id}` });
-        });
-    });
+        const reply_id = await Reply.writeReply(reqData);
+        return res.status(201).json({ message: `Upload post Success. Reply ID is ${reply_id}` });
+    } catch(error) {
+        console.error(error);
+        return res.status(500).json({ error: 'An error occurred' });
+    }
 }
 
-exports.getUserById = (req, res) => {
+exports.getUserById = async (req, res) => {
     const user_id = req.params.user_id;
 
-    replyUtils.getUserById(user_id, (error, user) => {
-        if (error) {
-            return res.status(500).json({ error: 'An error occurred' });
-        }
+    try {
+        const user = await replyUtils.getUserById(user_id);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
         return res.status(200).json(user);
-    });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'An error occurred' });
+    }
 }
 
 exports.getReplyByPostId = async (req, res) => {
