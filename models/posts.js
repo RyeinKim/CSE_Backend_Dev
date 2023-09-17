@@ -120,7 +120,7 @@ exports.getPostById = async (post_id) => {
 
 // 게시글 ID 로 게시글 삭제하기
 exports.deletePostById = async (post_id) => {
-    console.log('post delete in');
+    devlog('post delete in');
     const currentDate = new Date();
     const sql = `UPDATE posts SET deletedAt = ? WHERE post_id = ?;
                  INSERT INTO delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
@@ -166,9 +166,8 @@ exports.getDeletedPosts = async (reqData) => {
         });
         return results;
     } catch (error) {
-
+        throw error;
     }
-
 }
 
 /*exports.deletePostById = (post_id, callback) => {

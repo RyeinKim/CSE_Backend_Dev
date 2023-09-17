@@ -103,6 +103,7 @@ exports.getPostsAll = async (req, res) => {
     if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
         return res.status(400).json({ code: 'invalid_offset' });
     }
+
     if (!limit || isNaN(limit) || limit < 1) {
         return res.status(400).json({ code: 'invalid_limit' });
     }

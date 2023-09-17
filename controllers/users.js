@@ -97,10 +97,11 @@ exports.loadUsers = (req, res) => {
 
 // 회원 전화번호 업데이트
 exports.updateUser = async (req, res) => {
-    console.log(`[Cont] updateUser req.session = `, req.session);
+    devlog(`[Cont] updateUser req.session = ${req.session}`);
     const { email, phoneNumber } = req.body;
-    console.log(`[Cont] updateUser email = `, email);
-    console.log(`[Cont] updateUser phoneNumber = `, phoneNumber);
+    devlog(`[Cont] updateUser email = ${email}`);
+    devlog(`[Cont] updateUser phoneNumber = ${phoneNumber}`);
+
     const reqData = {
         email: email,
         phoneNumber: phoneNumber
