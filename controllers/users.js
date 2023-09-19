@@ -1,6 +1,6 @@
 const User = require("../models/users");
 const mysql = require('mysql');
-const { devlog } = require("../config/config");
+const { devlog, errorlog} = require("../config/config");
 const userUtils = require("../utils/userUtils");
 
 /**
@@ -264,8 +264,8 @@ exports.loginUser = async (req, res) => {
         devlog(`[B] req.session.user_id = ${req.session.user_id}`);
         return res.status(200).json({ user_id: resData, session_id: req.sessionID });
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred' });
+        errorlog(error);
+        return res.status(500).json({ error: '내부 서버 오류' });
     }
 }
 /*exports.loginUser = async (req, res) => {
@@ -419,20 +419,58 @@ exports.changeUserPass = async (req, res) => {
     });
 }*/
 
+// 유저 ID로 유저 이름 가져오기 (API)
+exports.getUserById = async (req, res) => {
+    const user_id = req.params.user_id;
+
+    try {
+        const user = await User.getUserById(user_id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    } catch (error) {
+        return res.status(500).json({ error: '내부 서버 오류' });
+    }
+}
+
+// 유저 ID로 유저 이름 가져오기 (함수)
+exports.getUserByUserId = async (req, res) => {
+    const user_id = req.body.user_id;
+
+    try {
+        const user = await userUtils.getUserByUserId(user_id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        return res.status(200).json(user);
+    } catch (error) {
+        return res.status(500).json({ error: '내부 함수 오류' });
+    }
+}
+
 // 회원 로그아웃
 exports.logoutUser = (req, res) => {
-    console.log(`logout req.session = `, req.session);
+    devlog(`logout req.session = ${req.session}`);
     const user_id = req.session.user_id;
     if (!user_id) return res.status(400).json({ error: 'invalid_user_id '});
-    req.session.destroy();
-    return res.status(204).end();
+    req.session.destroy((error) => {
+        if (error) {
+            return res.status(500).json({ error: 'Failed to logout' });
+        }
+        return res.status(201).json({ message: 'Logout successful' });
+    });
 }
 
 // 로그인 상태 확인
 exports.checkUserAuth = (req, res) => {
     if (req.session.user_id) {
         // 사용자가 로그인되어 있는 경우
-        res.status(200).json({ authenticated: true });
+        res.status(200).json({ authenticated: true, user_id: req.session.user_id });
     } else {
         // 사용자가 로그인되어 있지 않은 경우
         res.status(401).json({ authenticated: false });

@@ -1,5 +1,5 @@
 const mysql = require('../config/database');
-const {devlog} = require("../config/config");
+const {devlog, errorlog} = require("../config/config");
 
 /**
  * 게시글쓰기
@@ -8,6 +8,7 @@ const {devlog} = require("../config/config");
  * 게시글ID로 게시글 불러오기
  * 게시글 ID 로 게시글 삭제하기
  * 삭제된 게시글 불러오기
+ * 유저 ID로 게시글 목록 불러오기
  */
 
 // 회원가입
@@ -52,26 +53,6 @@ exports.writePost = async (reqData) => {
     } catch (error) {
         throw error;
     }
-}
-
-// 유저ID로 유저이름 가져오기
-exports.getUserById = async (user_id) => {
-    const query = 'SELECT * FROM users WHERE id = ?';
-
-    return new Promise((resolve, reject) => {
-        mysql.connection.query(query, user_id, (error, results) => {
-            if (error) {
-                reject(error);
-            } else {
-                if (results.length === 0) {
-                    resolve(null);
-                } else {
-                    const user = results[0];
-                    resolve(user);
-                }
-            }
-        });
-    });
 }
 
 // 모든 게시글 불러오기
@@ -161,6 +142,30 @@ exports.getDeletedPosts = async (reqData) => {
                 if (error) {
                     return reject(error);
                 }
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// 유저 ID로 게시글 목록 불러오기
+exports.getPostByUserId = async (reqData) => {
+    devlog("[Model] getPostsAll in");
+
+    const { user_id, limit, offset } = reqData;
+    const sql = `SELECT * FROM posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [user_id, limit, offset], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                devlog(`[Model] Posts / getPostByUserId results = ${results}`);
                 return resolve(results);
             });
         });

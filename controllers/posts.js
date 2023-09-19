@@ -2,6 +2,7 @@ const Post = require('../models/posts');
 const mysql = require('mysql');
 const { devlog } = require("../config/config");
 const db = require("../config/database");
+const userUtils = require("../utils/userUtils");
 
 /**
  * 회원가입
@@ -10,6 +11,7 @@ const db = require("../config/database");
  * 모든 게시글 불러오기
  * 게시글 ID로 게시글 불러오기
  * 게시글 ID로 게시글 삭제하기
+ * 유저 ID로 게시글 목록 불러오기
  */
 
 // 회원가입
@@ -40,6 +42,7 @@ exports.registerUser = async (req, res) => {
 exports.writePost = async (req, res) => {
     const { title, content } = req.body;
     const { user_id } = req.session; // 로그인한 사용자의 user_id
+    devlog(`[Cont] Post / writePost - user_id = ${user_id}`);
 
     if (!title) {
         return res.status(400).json({ error: 'Title is required.' });
@@ -55,7 +58,7 @@ exports.writePost = async (req, res) => {
 
     try {
         // user_id를 사용하여 사용자 정보 조회
-        const user = await Post.getUserById(user_id);
+        const user = await userUtils.getUserByUserId(user_id);
 
         if (!user) {
             return res.status(401).json({ error: 'User not found.' });
@@ -74,23 +77,6 @@ exports.writePost = async (req, res) => {
         return res.status(201).json({ message: `Upload post Success. Post ID is ${post_id}` });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: 'An error occurred' });
-    }
-}
-
-// 유저 ID로 유저 이름 가져오기
-exports.getUserById = async (req, res) => {
-    const user_id = req.params.user_id;
-
-    try {
-        const user = await Post.getUserById(user_id);
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        return res.status(200).json(user);
-    } catch (error) {
         return res.status(500).json({ error: 'An error occurred' });
     }
 }
@@ -136,8 +122,6 @@ exports.getPostsAll = async (req, res) => {
         return res.status(500).json({message: '내부 서버 오류'});
     }
 }
-
-
 
 // 게시글 ID로 게시글 불러오기
 exports.getPostById = async (req, res) => {
@@ -205,6 +189,38 @@ exports.getDeletedPosts = async (req, res) => {
     } catch (error) {
         console.log(error);
         return res.status(500).json({message: '내부 서버 오류'});
+    }
+}
+
+// 유저 ID로 게시글 목록 불러오기
+exports.getPostByUserId = async (req, res) => {
+    const offset = parseInt(req.query.offset);
+    const limit = parseInt(req.query.limit);
+    const user_id = req.params.user_id;
+
+    if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
+        return res.status(400).json({ code: 'invalid_offset' });
+    }
+
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ code: 'invalid_limit' });
+    }
+
+    const reqData = {
+        user_id: user_id,
+        offset: offset,
+        limit: limit,
+    };
+
+    try {
+        const posts = await Post.getPostByUserId(reqData);
+        devlog(`[Cont] Posts / getPostByUserId posts = ${posts}`);
+        if (!posts) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        return res.status(200).json(posts);
+    } catch (error) {
+        return res.status(500).json({ error: '내부 서버 오류' });
     }
 }
 

@@ -307,6 +307,28 @@ exports.checkUserPass = async (reqData) => {
     })
 }
 
+// 유저ID로 유저이름 가져오기 (API)
+exports.getUserById = async (user_id) => {
+    const query = 'SELECT * FROM users WHERE id = ?';
+
+    return new Promise((resolve, reject) => {
+        mysql.connection.query(query, user_id, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    devlog(`results = ${results}`);
+                    devlog(`results[0] = ${results[0]}`);
+                    const user = results[0];
+                    resolve(user);
+                }
+            }
+        });
+    });
+}
+
 /*exports.checkUserPass = (reqData, callback) => {
     const { email, username, phonenum } = reqData;
     const sql = 'SELECT id FROM users WHERE email = ? AND username = ? AND phoneNumber = ?';

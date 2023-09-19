@@ -1,5 +1,6 @@
 const express = require('express');
 const usersController = require('../controllers/users');
+const {isLoggedIn} = require("../lib/auth");
 const isLoggendIn = require('../lib/auth').isLoggedIn;
 const isDeletedUser = require('../lib/auth').isDeletedUser;
 const isPassCheck = require('../lib/auth').isPassCheck;
@@ -13,5 +14,6 @@ router.post('/users/auth', isDeletedUser, usersController.loginUser);  // 로그
 router.delete('/users', isLoggendIn, usersController.deleteUser);  // 유저 정보 삭제 API
 router.post('/users/findEmail', usersController.findUserEmail); // 이메일 찾기
 router.patch('/users/changePass', isPassCheck, usersController.changeUserPass); // 비밀번호 변경
+router.get('/users/:user_id', isLoggedIn, usersController.getUserById);  // User ID 로 유저정보 불러오기 API
 
 module.exports = router;

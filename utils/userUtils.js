@@ -87,3 +87,24 @@ exports.getUserByEmail = async (email) => {
         return callback(null, user);
     });
 }*/
+
+exports.getUserByUserId = async (user_id) => {
+    const query = 'SELECT * FROM users WHERE id = ?';
+
+    return new Promise((resolve, reject) => {
+        mysql.connection.query(query, user_id, (error, results) => {
+            if (error) {
+                reject(error);
+            } else {
+                if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    devlog(`results = ${results}`);
+                    devlog(`results[0] = ${results[0]}`);
+                    const user = results[0];
+                    resolve(user);
+                }
+            }
+        });
+    });
+}
