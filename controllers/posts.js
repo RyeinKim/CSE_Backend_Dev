@@ -104,6 +104,7 @@ exports.getPostsAll = async (req, res) => {
         });
 
         const totalPosts = totalPostsResults[0].totalPosts;
+        devlog(`[Cont] posts / getPostByUserId totalPosts = ${totalPosts}`);
 
         const reqData = {
             offset: offset,
@@ -213,12 +214,21 @@ exports.getPostByUserId = async (req, res) => {
     };
 
     try {
+        const totalPostsResults = await new Promise((resolve, reject) => {
+            const totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts WHERE author_id = ?;`;
+            db.connection.query(totalPostsQuery, user_id, (error, results) => {
+                if (error) reject(error);
+                resolve(results);
+            });
+        });
+        const totalPosts = totalPostsResults[0].totalPosts;
+
         const posts = await Post.getPostByUserId(reqData);
         devlog(`[Cont] Posts / getPostByUserId posts = ${posts}`);
         if (!posts) {
             return res.status(404).json({ message: 'Post not found' });
         }
-        return res.status(200).json(posts);
+        return res.status(200).json({ totalPosts: totalPosts, message: posts});
     } catch (error) {
         return res.status(500).json({ error: '내부 서버 오류' });
     }

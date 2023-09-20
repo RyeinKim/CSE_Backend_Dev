@@ -153,7 +153,7 @@ exports.getDeletedPosts = async (reqData) => {
 
 // 유저 ID로 게시글 목록 불러오기
 exports.getPostByUserId = async (reqData) => {
-    devlog("[Model] getPostsAll in");
+    devlog("[Model] posts / getPostByUserId in");
 
     const { user_id, limit, offset } = reqData;
     const sql = `SELECT * FROM posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
