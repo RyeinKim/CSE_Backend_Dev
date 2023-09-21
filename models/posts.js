@@ -35,15 +35,29 @@ exports.registerUser = async (reqData) => {
 
 // 게시글쓰기
 exports.writePost = async (reqData) => {
-    const sql = `INSERT INTO posts (author_id, title, author, content)
-                VALUES (${reqData.author_id}, ${reqData.title}, ${reqData.author}, ${reqData.content});`;
+    const { author_id, title, author, content, tableName } = reqData;
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `INSERT INTO posts.FreeBoard (author_id, title, author, content)
+                VALUES (?, ?, ?, ?);`;
+            break;
+        case 'notice':
+            sql = `INSERT INTO posts.NoticeBoard (author_id, title, author, content)
+                VALUES (?, ?, ?, ?);`;
+            break;
+        case 'posts':
+            sql = `INSERT INTO posts.posts (author_id, title, author, content)
+                VALUES (?, ?, ?, ?);`;
+            break;
+    }
+
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, (error, results) => {
+            mysql.connection.query(sql, [author_id, title, author, content], (error, results) => {
                 if (error) {
-                    // 에러
-                    console.error(error);
+                    errorlog(error);
                     return reject(error);
                 }
                 return resolve(results.insertId);
@@ -58,11 +72,24 @@ exports.writePost = async (reqData) => {
 // 모든 게시글 불러오기
 exports.getPostsAll = async (reqData) => {
     devlog("[Model] getPostsAll in");
-    const sql = `SELECT * FROM posts LIMIT ? OFFSET ?;`;
+    const { limit, offset, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `SELECT * FROM posts.FreeBoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'notice':
+            sql = `SELECT * FROM posts.NoticeBoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'posts':
+            sql = `SELECT * FROM posts.posts LIMIT ? OFFSET ?;`;
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [reqData.limit, reqData.offset], (error, results) => {
+            mysql.connection.query(sql, [limit, offset], (error, results) => {
                 if (error) {
                     return reject(error);
                 }
@@ -76,8 +103,22 @@ exports.getPostsAll = async (reqData) => {
 }
 
 // 게시글ID로 게시글 불러오기
-exports.getPostById = async (post_id) => {
-    const sql = 'SELECT * FROM posts WHERE post_id = ?';
+exports.getPostByPostId = async (reqData) => {
+    devlog(`[Model] posts / getPostByPostId in`);
+    const { tableName, post_id } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = 'SELECT * FROM posts.FreeBoard WHERE post_id = ?';
+            break;
+        case 'notice':
+            sql = 'SELECT * FROM posts.NoticeBoard WHERE post_id = ?';
+            break;
+        case 'posts':
+            sql = 'SELECT * FROM posts.posts WHERE post_id = ?';
+            break;
+    }
 
     try {
         const results = await new Promise ((resolve, reject) => {
@@ -100,16 +141,42 @@ exports.getPostById = async (post_id) => {
 }
 
 // 게시글 ID 로 게시글 삭제하기
-exports.deletePostById = async (post_id) => {
+exports.deletePostById = async (reqData) => {
     devlog('post delete in');
+    const { tableName, post_id } = reqData;
     const currentDate = new Date();
-    const sql = `UPDATE posts SET deletedAt = ? WHERE post_id = ?;
-                 INSERT INTO delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
+
+    let sql;
+    switch(tableName) {
+        case 'free':
+            sql = `UPDATE posts.FreeBoard SET deletedAt = ? WHERE post_id = ?;
+                 INSERT INTO posts.del_FreeBoard (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
-                 FROM posts
+                 FROM posts.FreeBoard
                  WHERE post_id = ?;
-                 DELETE FROM posts
+                 DELETE FROM posts.FreeBoard
                  WHERE post_id = ?;`;
+            break;
+        case 'notice':
+            sql = `UPDATE posts.NoticeBoard SET deletedAt = ? WHERE post_id = ?;
+                 INSERT INTO posts.del_NoticeBoard (post_id, author_id, author, title, content, createAt, deletedAt)
+                 SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
+                 FROM posts.NoticeBoard
+                 WHERE post_id = ?;
+                 DELETE FROM posts.NoticeBoard
+                 WHERE post_id = ?;`;
+            break;
+        case 'posts':
+            sql = `UPDATE posts.posts SET deletedAt = ? WHERE post_id = ?;
+                 INSERT INTO posts.delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
+                 SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
+                 FROM posts.posts
+                 WHERE post_id = ?;
+                 DELETE FROM posts.posts
+                 WHERE post_id = ?;`;
+            break;
+    }
+
 
     try {
         const results = await new Promise((resolve, reject) => {
@@ -134,11 +201,24 @@ exports.deletePostById = async (post_id) => {
 // 삭제된 게시글 불러오기
 exports.getDeletedPosts = async (reqData) => {
     devlog("[Model] getDeletedPosts in");
-    const sql = `SELECT * FROM delete_posts LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
+    const { tableName, limit, offset } = reqData;
+
+    let sql;
+    switch(tableName) {
+        case 'free':
+            sql = `SELECT * FROM posts.del_FreeBoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'notice':
+            sql = `SELECT * FROM posts.del_NoticeBoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'posts':
+            sql = `SELECT * FROM posts.delete_posts LIMIT ? OFFSET ?;`;
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, (error, results) => {
+            mysql.connection.query(sql,[limit, offset], (error, results) => {
                 if (error) {
                     return reject(error);
                 }
@@ -155,8 +235,20 @@ exports.getDeletedPosts = async (reqData) => {
 exports.getPostByUserId = async (reqData) => {
     devlog("[Model] posts / getPostByUserId in");
 
-    const { user_id, limit, offset } = reqData;
-    const sql = `SELECT * FROM posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
+    const { user_id, tableName, limit, offset } = reqData;
+
+    let sql;
+    switch(tableName) {
+        case 'free':
+            sql = `SELECT * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            break;
+        case 'notice':
+            sql = `SELECT * FROM posts.NoticeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            break;
+        case 'posts':
+            sql = `SELECT * FROM posts.posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
