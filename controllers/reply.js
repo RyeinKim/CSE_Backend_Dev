@@ -56,7 +56,7 @@ exports.getUserById = async (req, res) => {
 }
 
 exports.getReplyByPostId = async (req, res) => {
-    const post_id = req.params.post_id;
+    const { post_id, tableName } = req.params;
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
 
@@ -69,7 +69,19 @@ exports.getReplyByPostId = async (req, res) => {
 
     try {
         const totalReplyResults = await new Promise((resolve, reject) => {
-            const totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply WHERE post_id = ?;`;
+            let totalReplyQuery;
+            switch (tableName) {
+                case 'free':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_free WHERE post_id = ?;`;
+                    break;
+                case 'notice':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_notice WHERE post_id = ?;`;
+                    break;
+                case 'reply':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply WHERE post_id = ?;`;
+                    break;
+            }
+
             db.connection.query(totalReplyQuery, post_id, (error, results) => {
                 if (error) reject(error);
                 resolve(results);
@@ -82,6 +94,7 @@ exports.getReplyByPostId = async (req, res) => {
             offset: offset,
             limit: limit,
             post_id: post_id,
+            tableName: tableName,
         };
 
         const reply = await Reply.getReplyByPostId(reqData);
@@ -102,6 +115,7 @@ exports.getReplyByPostId = async (req, res) => {
 
 exports.getReplyByUserId = async (req, res) => {
     const { user_id } = req.session;
+    const { tableName } = req.params;
     devlog(`[Cont] reply / getReplyByUserId user_id = ${user_id}`);
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
@@ -118,10 +132,25 @@ exports.getReplyByUserId = async (req, res) => {
     }
 
     try {
+
         const totalReplyResults = await new Promise((resolve, reject) => {
-            const totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply WHERE user_id = ?;`;
+            let totalReplyQuery;
+            switch (tableName) {
+                case 'free':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_free WHERE user_id = ?;`;
+                    break;
+                case 'notice':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_notice WHERE user_id = ?;`;
+                    break;
+                case 'reply':
+                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply WHERE user_id = ?;`;
+                    break;
+            }
             db.connection.query(totalReplyQuery, user_id, (error, results) => {
-                if (error) reject(error);
+                if (error) {
+                    errorlog(error);
+                    reject(error);
+                }
                 resolve(results);
             });
         });
@@ -132,6 +161,7 @@ exports.getReplyByUserId = async (req, res) => {
             offset: offset,
             limit: limit,
             user_id: user_id,
+            tableName: tableName,
         };
 
         const reply = await Reply.getReplyByUserId(reqData);
@@ -145,21 +175,27 @@ exports.getReplyByUserId = async (req, res) => {
             message: reply
         });
     } catch (error) {
-        console.error('MySQL Error:', error);
+        errorlog('MySQL Error:', error);
         return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
 
 exports.deleteReplyById = async (req, res) => {
-    const reply_id = req.params.reply_id;
+    const { reply_id, tableName } = req.params;
+
+    const reqData = {
+        reply_id: reply_id,
+        tableName: tableName,
+    };
 
     try {
-        const reply = await Reply.deleteReplyById(reply_id);
+        const reply = await Reply.deleteReplyById(reqData);
         if (!reply) {
             return res.status(404).json({ message: 'Post not found' });
         }
         return res.status(201).json({ message: `Reply(id=${reply_id}) deleted successfully.` });
     } catch (error) {
+        errorlog(error);
         return res.status(500).json({ error: '내부 서버 오류' });
     }
 }
@@ -167,6 +203,7 @@ exports.deleteReplyById = async (req, res) => {
 exports.getDeletedReply = async (req, res) => {
     devlog(`[Cont] getDeletedReply in`);
 
+    const { tableName } = req.params;
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
 
@@ -179,9 +216,24 @@ exports.getDeletedReply = async (req, res) => {
 
     try {
         const totalDelReplyResults = await new Promise((resolve, reject) => {
-            const totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM delete_reply;`;
+            let totalDelReplyQuery;
+            switch (tableName) {
+                case 'free':
+                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply_free;`;
+                    break;
+                case 'notice':
+                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply_notice;`;
+                    break;
+                case 'reply':
+                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply;`;
+                    break;
+            }
+
             db.connection.query(totalDelReplyQuery, (error, results) => {
-                if (error) reject(error);
+                if (error) {
+                    errorlog(error);
+                    reject(error);
+                }
                 resolve(results);
             });
         });
@@ -191,6 +243,7 @@ exports.getDeletedReply = async (req, res) => {
         const reqData = {
             offset: offset,
             limit: limit,
+            tableName: tableName,
         };
 
         const reply = await Reply.getDeletedReply(reqData);
@@ -198,21 +251,22 @@ exports.getDeletedReply = async (req, res) => {
         return res.status(200).json({ totalPosts: totalReply, message: reply });
 
     } catch (error) {
-        console.log(error);
+        errorlog(error);
         return res.status(500).json({message: '내부 서버 오류'});
     }
 }
 
 exports.editReply = async (req, res) => {
     const { reply } = req.body;
-    const reply_id = req.params.reply;
+    const { reply_id, tableName } = req.params;
     devlog(`[Cont] editReply req.session = ${req.session}`);
     devlog(`[Cont] editReply content = ${reply}`);
     devlog(`[Cont] editReply reply_id = ${reply_id}`);
 
     const reqData = {
         reply: reply,
-        reply_id: reply_id
+        reply_id: reply_id,
+        tableName: tableName,
     }
 
     if (!reply || !reply_id) {
@@ -227,7 +281,7 @@ exports.editReply = async (req, res) => {
 
         return res.status(201).json({ message: `Reply(id=${reply_id})'s content edited successfully.` });
     } catch (error) {
-        console.error(error);
+        errorlog(error);
         return res.status(500).json({ error: '내부 서버 오류'});
     }
 }

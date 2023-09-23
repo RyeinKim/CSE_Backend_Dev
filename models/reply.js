@@ -8,11 +8,15 @@ exports.writeReply = async (reqData) => {
     let sql;
     switch (tableName) {
         case 'free':
-
+            sql = `INSERT INTO reply.reply_free (post_id, user_id, username, reply)
+                VALUES (?, ?, ?, ?);`;
+            break;
         case 'notice':
-
+            sql = `INSERT INTO reply.reply_notice (post_id, user_id, username, reply)
+                VALUES (?, ?, ?, ?);`;
+            break;
         case 'reply':
-            sql = `INSERT INTO reply (post_id, user_id, username, reply)
+            sql = `INSERT INTO reply.reply (post_id, user_id, username, reply)
                 VALUES (?, ?, ?, ?);`;
             break;
     }
@@ -36,12 +40,60 @@ exports.writeReply = async (reqData) => {
 exports.getReplyByPostId = async (reqData) => {
     devlog("Reply / getReplyByPostId in");
 
-    const { post_id, limit, offset } = reqData;
-    const sql = 'SELECT * FROM reply WHERE post_id = ? LIMIT ? OFFSET ?;';
+    const { post_id, limit, offset, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = 'SELECT * FROM reply.reply_free WHERE post_id = ? LIMIT ? OFFSET ?;';
+            break;
+        case 'notice':
+            sql = 'SELECT * FROM reply.reply_notice WHERE post_id = ? LIMIT ? OFFSET ?;';
+            break;
+        case 'reply':
+            sql = 'SELECT * FROM reply.reply WHERE post_id = ? LIMIT ? OFFSET ?;';
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, [post_id, limit, offset], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                if (results.length === 0) {
+                    return resolve(null);
+                }
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+exports.getReplyByUserId = async (reqData) => {
+    devlog("Reply / getReplyByUserId in");
+    const { offset, limit, user_id, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = 'SELECT * FROM reply.reply_free WHERE user_id = ? LIMIT ? OFFSET ?;';
+            break;
+        case 'notice':
+            sql = 'SELECT * FROM reply.reply_notice WHERE user_id = ? LIMIT ? OFFSET ?;';
+            break;
+        case 'reply':
+            sql = 'SELECT * FROM reply.reply WHERE user_id = ? LIMIT ? OFFSET ?;';
+            break;
+    }
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [user_id, limit, offset], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
@@ -58,43 +110,42 @@ exports.getReplyByPostId = async (reqData) => {
     }
 }
 
-exports.getReplyByUserId = async (reqData) => { /*여기하는중*/
-    devlog("Reply / getReplyByUserId in");
-
-    const { post_id } = reqData;
-    const sql = 'SELECT * FROM reply WHERE user_id = ?';
-
-    try {
-        const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, user_id, (error, results) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                if (results.length === 0) {
-                    return resolve(null); // 게시글 없을 경우 null 반환
-                }
-
-                return resolve(results);
-            });
-        });
-        return results;
-    } catch (error) {
-        throw error;
-    }
-}
-
 // 게시글 ID 로 게시글 삭제하기
-exports.deleteReplyById = async (reply_id) => {
+exports.deleteReplyById = async (reqData) => {
     devlog('reply delete in');
+    const { reply_id, tableName } = reqData;
     const currentDate = new Date();
-    const sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ?;
-                 INSERT INTO delete_reply (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `UPDATE reply.reply_free SET deletedAt = ? WHERE reply_id = ?;
+                 INSERT INTO del_reply.del_reply_free (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
-                 FROM reply
+                 FROM reply.reply_free
                  WHERE reply_id = ?;
-                 DELETE FROM reply
+                 DELETE FROM reply.reply_free
                  WHERE reply_id = ?;`;
+            break;
+        case 'notice':
+            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ?;
+                 INSERT INTO del_reply.del_reply_notice (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
+                 SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
+                 FROM reply.reply_notice
+                 WHERE reply_id = ?;
+                 DELETE FROM reply.reply_notice
+                 WHERE reply_id = ?;`;
+            break;
+        case 'reply':
+            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ?;
+                 INSERT INTO del_reply.del_reply (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
+                 SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
+                 FROM reply.reply
+                 WHERE reply_id = ?;
+                 DELETE FROM reply.reply
+                 WHERE reply_id = ?;`;
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
@@ -120,11 +171,24 @@ exports.deleteReplyById = async (reply_id) => {
 
 exports.getDeletedReply = async (reqData) => {
     devlog("[Model] getDeletedReply in");
-    const sql = `SELECT * FROM delete_reply LIMIT ${reqData.limit} OFFSET ${reqData.offset};`;
+    const { offset, limit, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `SELECT * FROM del_reply.del_reply_free LIMIT ? OFFSET ?;`;
+            break;
+        case 'notice':
+            sql = `SELECT * FROM del_reply.del_reply_notice LIMIT ? OFFSET ?;`;
+            break;
+        case 'reply':
+            sql = `SELECT * FROM del_reply.del_reply LIMIT ? OFFSET ?;`;
+            break;
+    }
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, (error, results) => {
+            mysql.connection.query(sql, [limit, offset], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
@@ -140,16 +204,27 @@ exports.getDeletedReply = async (reqData) => {
 
 exports.editReply = async (reqData) => {
     devlog('[Model] Reply / editReply In');
-    devlog(`req.session = `, reqData.session);
-
-    const { reply, reply_id } = reqData;
+    const { reply, reply_id, tableName } = reqData;
     devlog(`reply = ${reply} | reply_id = ${reply_id}`);
 
-    const sql = `UPDATE reply SET reply = ? WHERE reply_id = ?;`;
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `UPDATE reply.reply_free SET reply = ? WHERE reply_id = ?;`;
+            break;
+        case 'notice':
+            sql = `UPDATE reply.reply_notice SET reply = ? WHERE reply_id = ?;`;
+            break;
+        case 'reply':
+            sql = `UPDATE reply.reply SET reply = ? WHERE reply_id = ?;`;
+            break;
+    }
+
     try {
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, [reply, reply_id], (error, results) => {
                 if (error) {
+                    errorlog(error);
                     return reject(error);
                 }
                 if (results.affectedRows === 0) {
