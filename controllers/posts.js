@@ -239,13 +239,13 @@ exports.getDeletedPosts = async (req, res) => {
             let totalDelPostsQuery;
             switch(tableName) {
                 case 'free':
-                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.del_FreeBoard;`;
+                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_free;`;
                     break;
                 case 'notice':
-                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.del_NoticeBoard;`;
+                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_notice;`;
                     break;
                 case 'posts':
-                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.delete_posts;`;
+                    totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.delete_posts;`;
                     break;
             }
 
