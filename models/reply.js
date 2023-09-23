@@ -3,9 +3,20 @@ const {devlog, errorlog} = require("../config/config");
 
 // 댓글 쓰기
 exports.writeReply = async (reqData) => {
-    const { post_id, user_id, username, reply } = reqData;
-    const sql = `INSERT INTO reply (post_id, user_id, username, reply)
+    const { post_id, user_id, username, reply, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+
+        case 'notice':
+
+        case 'reply':
+            sql = `INSERT INTO reply (post_id, user_id, username, reply)
                 VALUES (?, ?, ?, ?);`;
+            break;
+    }
+
     try {
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, [post_id, user_id, username, reply], (error, results) => {

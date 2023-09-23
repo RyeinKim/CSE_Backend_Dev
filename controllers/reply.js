@@ -1,10 +1,10 @@
 const Reply = require('../models/reply');
-const mysql = require('mysql');
 const {devlog, errorlog} = require("../config/config");
 const db = require("../config/database");
 const replyUtils = require("../utils/replyUtils");
 
 exports.writeReply = async (req, res) => {
+    const { tableName } = req.params;
     const { reply, post_id } = req.body;
     const { user_id } = req.session;
 
@@ -28,6 +28,7 @@ exports.writeReply = async (req, res) => {
             reply: reply,
             username: user.username,
             user_id: user_id,
+            tableName: tableName,
         }
 
         const reply_id = await Reply.writeReply(reqData);
@@ -98,7 +99,6 @@ exports.getReplyByPostId = async (req, res) => {
         return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
-
 
 exports.getReplyByUserId = async (req, res) => {
     const { user_id } = req.session;
