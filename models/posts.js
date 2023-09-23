@@ -168,7 +168,7 @@ exports.deletePostById = async (reqData) => {
             break;
         case 'posts':
             sql = `UPDATE posts.posts SET deletedAt = ? WHERE post_id = ?;
-                 INSERT INTO posts.delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
+                 INSERT INTO test.delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
                  FROM posts.posts
                  WHERE post_id = ?;

@@ -47,21 +47,22 @@ exports.getReplyByPostId = async (reqData) => {
     }
 }
 
-exports.getReplyByUserId = async (reqData) => { /*여기하는중*/
+exports.getReplyByUserId = async (reqData) => {
     devlog("Reply / getReplyByUserId in");
+    const { user_id, offset, limit } = reqData;
 
-    const { post_id } = reqData;
-    const sql = 'SELECT * FROM reply WHERE user_id = ?';
+    const sql = 'SELECT * FROM reply WHERE user_id = ? LIMIT ? OFFSET ?';
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, user_id, (error, results) => {
+            mysql.connection.query(sql, [user_id, limit, offset], (error, results) => {
                 if (error) {
+                    errorlog(error);
                     return reject(error);
                 }
 
                 if (results.length === 0) {
-                    return resolve(null); // 게시글 없을 경우 null 반환
+                    return resolve(null);
                 }
 
                 return resolve(results);
@@ -129,8 +130,7 @@ exports.getDeletedReply = async (reqData) => {
 
 exports.editReply = async (reqData) => {
     devlog('[Model] Reply / editReply In');
-    devlog(`req.session = `, reqData.session);
-
+    
     const { reply, reply_id } = reqData;
     devlog(`reply = ${reply} | reply_id = ${reply_id}`);
 

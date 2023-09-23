@@ -160,6 +160,7 @@ exports.deleteReplyById = async (req, res) => {
         }
         return res.status(201).json({ message: `Reply(id=${reply_id}) deleted successfully.` });
     } catch (error) {
+        errorlog(error);
         return res.status(500).json({ error: '내부 서버 오류' });
     }
 }
@@ -181,7 +182,10 @@ exports.getDeletedReply = async (req, res) => {
         const totalDelReplyResults = await new Promise((resolve, reject) => {
             const totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM delete_reply;`;
             db.connection.query(totalDelReplyQuery, (error, results) => {
-                if (error) reject(error);
+                if (error) {
+                    errorlog(error);
+                    reject(error);
+                }
                 resolve(results);
             });
         });
@@ -198,7 +202,7 @@ exports.getDeletedReply = async (req, res) => {
         return res.status(200).json({ totalPosts: totalReply, message: reply });
 
     } catch (error) {
-        console.log(error);
+        errorlog(error);
         return res.status(500).json({message: '내부 서버 오류'});
     }
 }
