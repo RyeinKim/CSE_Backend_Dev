@@ -19,6 +19,8 @@ exports.writeReply = async (reqData) => {
             sql = `INSERT INTO reply.reply (post_id, user_id, username, reply)
                 VALUES (?, ?, ?, ?);`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -53,6 +55,8 @@ exports.getReplyByPostId = async (reqData) => {
         case 'reply':
             sql = 'SELECT * FROM reply.reply WHERE post_id = ? LIMIT ? OFFSET ?;';
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -89,6 +93,8 @@ exports.getReplyByUserId = async (reqData) => {
         case 'reply':
             sql = 'SELECT * FROM reply.reply WHERE user_id = ? LIMIT ? OFFSET ?;';
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -113,51 +119,53 @@ exports.getReplyByUserId = async (reqData) => {
 // 게시글 ID 로 게시글 삭제하기
 exports.deleteReplyById = async (reqData) => {
     devlog('reply delete in');
-    const { reply_id, tableName } = reqData;
+    const { reply_id, tableName, user_id } = reqData;
     const currentDate = new Date();
 
     let sql;
     switch (tableName) {
         case 'free':
-            sql = `UPDATE reply.reply_free SET deletedAt = ? WHERE reply_id = ?;
+            sql = `UPDATE reply.reply_free SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply_free (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
                  FROM reply.reply_free
-                 WHERE reply_id = ?;
+                 WHERE reply_id = ? AND user_id = ?;
                  DELETE FROM reply.reply_free
-                 WHERE reply_id = ?;`;
+                 WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'notice':
-            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ?;
+            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply_notice (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
                  FROM reply.reply_notice
-                 WHERE reply_id = ?;
+                 WHERE reply_id = ? AND user_id = ?;
                  DELETE FROM reply.reply_notice
-                 WHERE reply_id = ?;`;
+                 WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'reply':
-            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ?;
+            sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
                  FROM reply.reply
-                 WHERE reply_id = ?;
+                 WHERE reply_id = ? AND user_id = ?;
                  DELETE FROM reply.reply
-                 WHERE reply_id = ?;`;
+                 WHERE reply_id = ? AND user_id = ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [currentDate, reply_id, currentDate, reply_id, reply_id], (error, results) => {
+            mysql.connection.query(sql, [currentDate, reply_id, user_id, currentDate, reply_id, user_id, reply_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
                 }
                 const affectedRows = results[results.length - 1].affectedRows;
                 if (affectedRows === 0) {
-                    devlog(`deleteReplyById / affectedRows === 0`);
-                    return resolve(null);
+                    const noDataError = new Error("해당 조건에 맞는 댓글이 없음");
+                    return reject(noDataError);
                 }
                 devlog(`Post id ${reply_id} has been deleted.`);
                 return resolve(results);
@@ -184,6 +192,8 @@ exports.getDeletedReply = async (reqData) => {
         case 'reply':
             sql = `SELECT * FROM del_reply.del_reply LIMIT ? OFFSET ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -218,6 +228,8 @@ exports.editReply = async (reqData) => {
         case 'reply':
             sql = `UPDATE reply.reply SET reply = ? WHERE reply_id = ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {

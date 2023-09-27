@@ -21,7 +21,7 @@ exports.registerUser = async (reqData) => {
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, (error, results) => {
                 if (error)  {
-                    console.error(error);
+                    errorlog(error);
                     return reject(error);
                 }
                 resolve(results.insertId);
@@ -50,6 +50,8 @@ exports.writePost = async (reqData) => {
             sql = `INSERT INTO posts.posts (author_id, title, author, content)
                 VALUES (?, ?, ?, ?);`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
 
@@ -85,6 +87,8 @@ exports.getPostsAll = async (reqData) => {
         case 'posts':
             sql = `SELECT * FROM posts.posts LIMIT ? OFFSET ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -102,92 +106,57 @@ exports.getPostsAll = async (reqData) => {
     }
 }
 
-// 게시글ID로 게시글 불러오기
-exports.getPostByPostId = async (reqData) => {
-    devlog(`[Model] posts / getPostByPostId in`);
-    const { tableName, post_id } = reqData;
-
-    let sql;
-    switch (tableName) {
-        case 'free':
-            sql = 'SELECT * FROM posts.FreeBoard WHERE post_id = ?';
-            break;
-        case 'notice':
-            sql = 'SELECT * FROM posts.NoticeBoard WHERE post_id = ?';
-            break;
-        case 'posts':
-            sql = 'SELECT * FROM posts.posts WHERE post_id = ?';
-            break;
-    }
-
-    try {
-        const results = await new Promise ((resolve, reject) => {
-            mysql.connection.query(sql, post_id, (error, results) => {
-                if (error) {
-                    return reject(error);
-                }
-
-                if (results.length === 0) {
-                    return resolve(null);
-                }
-
-                return resolve(results);
-            });
-        });
-        return results;
-    } catch (error) {
-        throw error;
-    }
-}
-
 // 게시글 ID 로 게시글 삭제하기
 exports.deletePostById = async (reqData) => {
     devlog('post delete in');
-    const { tableName, post_id } = reqData;
+    const { tableName, post_id, user_id } = reqData;
     const currentDate = new Date();
 
     let sql;
     switch(tableName) {
         case 'free':
-            sql = `UPDATE posts.FreeBoard SET deletedAt = ? WHERE post_id = ?;
+            sql = `UPDATE posts.FreeBoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.del_free (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
                  FROM posts.FreeBoard
-                 WHERE post_id = ?;
+                 WHERE post_id = ? AND author_id = ?;
                  DELETE FROM posts.FreeBoard
-                 WHERE post_id = ?;`;
+                 WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'notice':
-            sql = `UPDATE posts.NoticeBoard SET deletedAt = ? WHERE post_id = ?;
+            sql = `UPDATE posts.NoticeBoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.del_notice (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
                  FROM posts.NoticeBoard
-                 WHERE post_id = ?;
+                 WHERE post_id = ? AND author_id = ?;
                  DELETE FROM posts.NoticeBoard
-                 WHERE post_id = ?;`;
+                 WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'posts':
-            sql = `UPDATE posts.posts SET deletedAt = ? WHERE post_id = ?;
+            sql = `UPDATE posts.posts SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
                  FROM posts.posts
-                 WHERE post_id = ?;
+                 WHERE post_id = ? AND author_id = ?;
                  DELETE FROM posts.posts
-                 WHERE post_id = ?;`;
+                 WHERE post_id = ? AND author_id = ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [currentDate, post_id, currentDate, post_id, post_id], (error, results) => {
+            mysql.connection.query(sql, [currentDate, post_id, user_id, currentDate, post_id, user_id, post_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
                 }
                 const affectedRows = results[results.length - 1].affectedRows;
                 if (affectedRows === 0) {
-                    return resolve(null);
+                    const noDataError = new Error("해당 조건에 맞는 게시글이 없음");
+                    return reject(noDataError);
                 }
                 devlog(`Post id ${post_id} has been deleted.`);
                 return resolve(results);
@@ -215,6 +184,8 @@ exports.getDeletedPosts = async (reqData) => {
         case 'posts':
             sql = `SELECT * FROM del_posts.delete_posts LIMIT ? OFFSET ?;`;
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
@@ -239,26 +210,85 @@ exports.getPostByUserId = async (reqData) => {
     const { user_id, tableName, limit, offset } = reqData;
 
     let sql;
+    let params = [];
     switch(tableName) {
+        case 'all':
+            sql = `
+            (
+                SELECT * FROM posts.FreeBoard WHERE author_id = ? 
+                UNION 
+                SELECT * FROM posts.NoticeBoard WHERE author_id = ?
+                UNION
+                SELECT * FROM posts.posts WHERE author_id = ?
+            )
+            LIMIT ? OFFSET ?;
+            `;
+            params = [user_id, user_id, user_id, limit, offset];
+            break;
         case 'free':
             sql = `SELECT * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            params = [user_id, limit, offset];
             break;
         case 'notice':
             sql = `SELECT * FROM posts.NoticeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            params = [user_id, limit, offset];
             break;
         case 'posts':
             sql = `SELECT * FROM posts.posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            params = [user_id, limit, offset];
             break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [user_id, limit, offset], (error, results) => {
+            mysql.connection.query(sql, params, (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
                 }
                 devlog(`[Model] Posts / getPostByUserId results = ${results}`);
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// 게시글ID로 게시글 불러오기
+exports.getPostByPostId = async (reqData) => {
+    devlog(`[Model] posts / getPostByPostId in`);
+    const { tableName, post_id } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = 'SELECT * FROM posts.FreeBoard WHERE post_id = ?';
+            break;
+        case 'notice':
+            sql = 'SELECT * FROM posts.NoticeBoard WHERE post_id = ?';
+            break;
+        case 'posts':
+            sql = 'SELECT * FROM posts.posts WHERE post_id = ?';
+            break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
+    }
+
+    try {
+        const results = await new Promise ((resolve, reject) => {
+            mysql.connection.query(sql, post_id, (error, results) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                if (results.length === 0) {
+                    return resolve(null);
+                }
+
                 return resolve(results);
             });
         });

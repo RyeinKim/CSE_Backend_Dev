@@ -1,6 +1,5 @@
 const Reply = require('../models/reply');
 const {devlog, errorlog} = require("../config/config");
-const db = require("../config/database");
 const replyUtils = require("../utils/replyUtils");
 
 exports.writeReply = async (req, res) => {
@@ -8,19 +7,21 @@ exports.writeReply = async (req, res) => {
     const { reply, post_id } = req.body;
     const { user_id } = req.session;
 
-    if (!reply || reply === null) {
-        return res.status(400).json({ error: 'Reply is required.' });
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
     }
-
-    if (!user_id) {
-        return res.status(401).json({ error: 'Authentication required.' });
+    if (!post_id) {
+        return res.status(400).json({ message: '필수항목 누락: post_id' });
+    }
+    if (!reply) {
+        return res.status(400).json({ message: '필수항목 누락: 댓글내용' });
     }
 
     try {
         const user = await replyUtils.getUserById(user_id);
 
         if (!user) {
-            return res.status(401).json({ error: 'User not found.' });
+            return res.status(401).json({ message: '타겟유저가 존재하지 않음' });
         }
 
         const reqData = {
@@ -32,75 +33,66 @@ exports.writeReply = async (req, res) => {
         }
 
         const reply_id = await Reply.writeReply(reqData);
-        return res.status(201).json({ message: `Upload post Success. Reply ID is ${reply_id}` });
+        return res.status(201).json({ message: `댓글 업로드 완료 / 댓글ID = ${reply_id}` });
     } catch(error) {
         errorlog(error);
-        return res.status(500).json({ error: 'An error occurred' });
+        return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
 
 exports.getUserById = async (req, res) => {
     const user_id = req.params.user_id;
 
+    if (!user_id) {
+        return res.status(400).json({ message: '필수항목 누락: user_id 파라미터' });
+    }
+
     try {
         const user = await replyUtils.getUserById(user_id);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(404).json({ message: '해당하는 유저 정보 없음' });
         }
         return res.status(200).json(user);
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ error: 'An error occurred' });
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
 
 exports.getReplyByPostId = async (req, res) => {
     const { post_id, tableName } = req.params;
+    const user_id = req.session.user_id;
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
 
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
+    if (!post_id) {
+        return res.status(400).json({ message: '필수항목 누락: post_id 파라미터' });
+    }
     if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
-        return res.status(400).json({ code: 'invalid_offset' });
+        return res.status(400).json({ message: '정상적인 offset 값 필요' });
     }
     if (!limit || isNaN(limit) || limit < 1) {
-        return res.status(400).json({ code: 'invalid_limit' });
+        return res.status(400).json({ message: '정상적인 limit 값 필요' });
     }
 
+    const reqData = {
+        offset: offset,
+        limit: limit,
+        user_id: user_id,
+        post_id: post_id,
+        tableName: tableName,
+    };
+
     try {
-        const totalReplyResults = await new Promise((resolve, reject) => {
-            let totalReplyQuery;
-            switch (tableName) {
-                case 'free':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_free WHERE post_id = ?;`;
-                    break;
-                case 'notice':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_notice WHERE post_id = ?;`;
-                    break;
-                case 'reply':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply WHERE post_id = ?;`;
-                    break;
-            }
-
-            db.connection.query(totalReplyQuery, post_id, (error, results) => {
-                if (error) reject(error);
-                resolve(results);
-            });
-        });
-
-        const totalReply = totalReplyResults[0].totalReply;
-
-        const reqData = {
-            offset: offset,
-            limit: limit,
-            post_id: post_id,
-            tableName: tableName,
-        };
-
+        const totalReply = await replyUtils.getTotalReplyByPostId(reqData);
         const reply = await Reply.getReplyByPostId(reqData);
 
         if (!reply) {
-            return res.status(404).json({ message: 'Reply not found' });
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
         }
 
         return res.status(200).json({
@@ -108,7 +100,7 @@ exports.getReplyByPostId = async (req, res) => {
             message: reply
         });
     } catch (error) {
-        console.error('MySQL Error:', error);
+        errorlog('MySQL Error:', error);
         return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
@@ -116,58 +108,34 @@ exports.getReplyByPostId = async (req, res) => {
 exports.getReplyByUserId = async (req, res) => {
     const { user_id } = req.session;
     const { tableName } = req.params;
-    devlog(`[Cont] reply / getReplyByUserId user_id = ${user_id}`);
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
 
+    devlog(`[Cont] reply / getReplyByUserId user_id = ${user_id}`);
+
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
     if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
-        return res.status(400).json({ code: 'invalid_offset' });
+        return res.status(400).json({ message: '정상적인 offset 값 필요' });
     }
     if (!limit || isNaN(limit) || limit < 1) {
-        return res.status(400).json({ code: 'invalid_limit' });
+        return res.status(400).json({ message: '정상적인 limit 값 필요' });
     }
 
-    if (!user_id) {
-        return res.status(401).json({ error: 'Authentication required.' });
-    }
+    const reqData = {
+        offset: offset,
+        limit: limit,
+        user_id: user_id,
+        tableName: tableName,
+    };
 
     try {
-
-        const totalReplyResults = await new Promise((resolve, reject) => {
-            let totalReplyQuery;
-            switch (tableName) {
-                case 'free':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_free WHERE user_id = ?;`;
-                    break;
-                case 'notice':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply.reply_notice WHERE user_id = ?;`;
-                    break;
-                case 'reply':
-                    totalReplyQuery = `SELECT COUNT(*) AS totalReply FROM reply WHERE user_id = ?;`;
-                    break;
-            }
-            db.connection.query(totalReplyQuery, user_id, (error, results) => {
-                if (error) {
-                    errorlog(error);
-                    reject(error);
-                }
-                resolve(results);
-            });
-        });
-
-        const totalReply = totalReplyResults[0].totalReply;
-
-        const reqData = {
-            offset: offset,
-            limit: limit,
-            user_id: user_id,
-            tableName: tableName,
-        };
-
+        const totalReply = await replyUtils.getTotalReplyByUserId(reqData);
         const reply = await Reply.getReplyByUserId(reqData);
 
         if (!reply) {
-            return res.status(404).json({ message: 'Post not found' });
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
         }
 
         return res.status(200).json({
@@ -182,72 +150,63 @@ exports.getReplyByUserId = async (req, res) => {
 
 exports.deleteReplyById = async (req, res) => {
     const { reply_id, tableName } = req.params;
+    const { user_id } = req.session.user_id;
+
+    if (!reply_id) {
+        return res.status(400).json({ message: '필수항목 누락: reply_id 파라미터' });
+    }
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
 
     const reqData = {
         reply_id: reply_id,
         tableName: tableName,
+        user_id: user_id,
     };
 
     try {
         const reply = await Reply.deleteReplyById(reqData);
         if (!reply) {
-            return res.status(404).json({ message: 'Post not found' });
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
         }
-        return res.status(201).json({ message: `Reply(id=${reply_id}) deleted successfully.` });
+        return res.status(201).json({ message: `댓글ID = ${reply_id} 삭제 완료` });
     } catch (error) {
         errorlog(error);
-        return res.status(500).json({ error: '내부 서버 오류' });
+        if (error.message === "해당 조건에 맞는 댓글이 없음") {
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
+        }
+        return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
 
 exports.getDeletedReply = async (req, res) => {
     devlog(`[Cont] getDeletedReply in`);
-
     const { tableName } = req.params;
     const offset = parseInt(req.query.offset);
     const limit = parseInt(req.query.limit);
 
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
     if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
-        return res.status(400).json({ code: 'invalid_offset' });
+        return res.status(400).json({ message: '정상적인 offset 값 필요' });
     }
     if (!limit || isNaN(limit) || limit < 1) {
-        return res.status(400).json({ code: 'invalid_limit' });
+        return res.status(400).json({ message: '정상적인 limit 값 필요' });
     }
 
+    const reqData = {
+        offset: offset,
+        limit: limit,
+        tableName: tableName,
+    };
+
     try {
-        const totalDelReplyResults = await new Promise((resolve, reject) => {
-            let totalDelReplyQuery;
-            switch (tableName) {
-                case 'free':
-                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply_free;`;
-                    break;
-                case 'notice':
-                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply_notice;`;
-                    break;
-                case 'reply':
-                    totalDelReplyQuery = `SELECT COUNT(*) AS totalReply FROM del_reply.del_reply;`;
-                    break;
-            }
-
-            db.connection.query(totalDelReplyQuery, (error, results) => {
-                if (error) {
-                    errorlog(error);
-                    reject(error);
-                }
-                resolve(results);
-            });
-        });
-
-        const totalReply = totalDelReplyResults[0].totalReply;
-
-        const reqData = {
-            offset: offset,
-            limit: limit,
-            tableName: tableName,
-        };
-
+        const totalReply = await replyUtils.getTotalDelReply(tableName);
         const reply = await Reply.getDeletedReply(reqData);
         devlog(`resData = ${reply}`);
+
         return res.status(200).json({ totalPosts: totalReply, message: reply });
 
     } catch (error) {
@@ -259,9 +218,20 @@ exports.getDeletedReply = async (req, res) => {
 exports.editReply = async (req, res) => {
     const { reply } = req.body;
     const { reply_id, tableName } = req.params;
+
     devlog(`[Cont] editReply req.session = ${req.session}`);
     devlog(`[Cont] editReply content = ${reply}`);
     devlog(`[Cont] editReply reply_id = ${reply_id}`);
+
+    if (!reply) {
+        return res.status(400).json({ message: '필수항목 누락: reply' });
+    }
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
+    if (!reply_id) {
+        return res.status(400).json({ message: '필수항목 누락: reply_id 파라미터' });
+    }
 
     const reqData = {
         reply: reply,
@@ -269,19 +239,14 @@ exports.editReply = async (req, res) => {
         tableName: tableName,
     }
 
-    if (!reply || !reply_id) {
-        return res.status(400).json({ error: 'Reply, Reply_id are required.' });
-    }
-
     try {
         const editReply = await Reply.editReply(reqData);
         if (!editReply) {
-            return res.status(404).json({ error: 'Reply not found' });
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
         }
-
-        return res.status(201).json({ message: `Reply(id=${reply_id})'s content edited successfully.` });
+        return res.status(201).json({ message: `댓글ID = ${reply_id} 내용 수정 완료` });
     } catch (error) {
         errorlog(error);
-        return res.status(500).json({ error: '내부 서버 오류'});
+        return res.status(500).json({ message: '내부 서버 오류'});
     }
 }
