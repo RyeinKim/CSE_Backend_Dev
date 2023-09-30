@@ -4,6 +4,7 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 const session = require('express-session');
 const cors = require('cors');
+const MySQLStore = require('express-mysql-session')(session);
 
 const routes = require('./routes/index');
 const config = require('./config/config');
@@ -16,14 +17,26 @@ dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
 // session
+const sessionStoreOptions = {
+    host: process.env.SESSION_DB_HOST,
+    user: process.env.SESSION_DB_USER,
+    password: process.env.SESSION_DB_PASSWORD,
+    database: process.env.SESSION_DB_DATABASE,
+    createDatabaseTable: true,
+    table: 'session',
+};
+
+const sessionStore = new MySQLStore(sessionStoreOptions);
+
 app.use(session({
     secret: "qweqwe",
     resave: false,
     saveUninitialized: true,
+    store: sessionStore,
     cookie: {
         httpOnly: true,
         secure: false,
-        maxAge: 1000 * 60 * 60 * 24,
+        maxAge: 1000 * 60 * 60 * 1, // 1시간
         sameSite: 'Lax', // Cross-site request 전송을 허용
     },
 }));
@@ -64,10 +77,9 @@ app.use((err, req, res, next) => {
 });
 
 server.listen(443, () => {
-    devlog(`HTTPS listening on port ${port}`);
+    devlog(`HTTPS listening on port 443`);
 });
 
 app.listen(port, () => {
     devlog(`HTTP listening on port ${port}`);
 });
-

@@ -1,5 +1,5 @@
 const mysql = require('../config/database');
-const { devlog } = require("../config/config");
+const { devlog, errorlog} = require("../config/config");
 
 /**
  * 회원 정보 목록 조회
@@ -134,6 +134,62 @@ exports.loginUser = async (reqData) => {
     }
 }
 
+// 회원가입
+exports.registerUser = async (reqData) => {
+    const { stNum, email, username, password, phoneNumber } = reqData;
+
+    const sql = `
+        UPDATE users
+        SET email = ?, password = ?, phoneNumber = ?
+        WHERE stNum = ? AND username = ?;
+    `;
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [email,password, phoneNumber, stNum, username],(error, results) => {
+                if (error)  {
+                    errorlog(error);
+                    return reject(error);
+                }
+
+                if (results.affectedRows === 0) {
+                    return reject(new Error('일치하는 계정 정보 없음'));
+                }
+
+                resolve(results);
+            });
+        })
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+/*exports.registerUser = async (reqData) => {
+    const { stNum, email, username, password, phoneNumber } = reqData;
+
+    const sql = `
+        INSERT INTO users (stNum, email, username, password, phoneNumber)
+        VALUES (
+            ?, ?, ?, ?, ?
+        );
+    `;
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [stNum, email, username, password, phoneNumber],(error, results) => {
+                if (error)  {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results.insertId);
+            });
+        })
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}*/
+
 // 이메일 찾기
 exports.findUserEmail = async (reqData) => {
     const { username, phonenum } = reqData;
@@ -200,4 +256,29 @@ exports.getUserById = async (user_id) => {
             return resolve(user);
         });
     });
+}
+
+exports.createUser = async(reqData) => {
+    const { stNum, username, password } = reqData;
+
+    const sql =
+        `INSERT INTO users (stNum, username, password)
+        VALUES (
+            ?, ?, ?
+        );`
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [stNum, username, password],(error, results) => {
+                if (error)  {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results.insertId);
+            });
+        })
+        return results;
+    } catch (error) {
+        throw error;
+    }
 }

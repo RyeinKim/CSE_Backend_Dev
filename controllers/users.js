@@ -1,6 +1,8 @@
 const User = require("../models/users");
 const { devlog, errorlog} = require("../config/config");
 const userUtils = require("../utils/userUtils");
+const mysql = require("mysql");
+const Post = require("../models/posts");
 
 /**
  * 회원 정보 목록 조회
@@ -148,6 +150,78 @@ exports.loginUser = async (req, res) => {
         return res.status(500).json({ message: '내부 서버 오류' });
     }
 }
+
+// 회원가입
+exports.registerUser = async (req, res) => {
+    const { stNum, email, username, password, phoneNumber } = req.body;
+
+    if (!stNum) {
+        return res.status(400).json({ message: '필수항목 누락: 학번' });
+    }
+    if (!email) {
+        return res.status(400).json({ message: '필수항목 누락: 이메일' });
+    }
+    if (!username) {
+        return res.status(400).json({ message: '필수항목 누락: 유저이름' });
+    }
+    if (!password) {
+        return res.status(400).json({ message: '필수항목 누락: 패스워드' });
+    }
+    if (!phoneNumber) {
+        return res.status(400).json({ message: '필수항목 누락: 휴대폰번호' });
+    }
+
+    const reqData = {
+        stNum: stNum,
+        email: email,
+        username: username,
+        password: password,
+        phoneNumber: phoneNumber,
+    }
+
+    try {
+        const user_id = await User.registerUser(reqData);
+        return res.status(201).json({ message: `가입완료 / 유저ID = ${user_id}` });
+    } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}
+/*exports.registerUser = async (req, res) => {
+    const { stNum, email, username, password, phoneNumber } = req.body;
+
+    if (!stNum) {
+        return res.status(400).json({ message: '필수항목 누락: 학번' });
+    }
+    if (!email) {
+        return res.status(400).json({ message: '필수항목 누락: 이메일' });
+    }
+    if (!username) {
+        return res.status(400).json({ message: '필수항목 누락: 유저이름' });
+    }
+    if (!password) {
+        return res.status(400).json({ message: '필수항목 누락: 패스워드' });
+    }
+    if (!phoneNumber) {
+        return res.status(400).json({ message: '필수항목 누락: 휴대폰번호' });
+    }
+
+    const reqData = {
+        stNum: stNum,
+        email: email,
+        username: username,
+        password: password,
+        phoneNumber: phoneNumber,
+    }
+
+    try {
+        const user_id = await User.registerUser(reqData);
+        return res.status(201).json({ message: `가입완료 / 유저ID = ${user_id}` });
+    } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}*/
 
 // 이메일 찾기
 exports.findUserEmail = async (req, res) => {
@@ -324,6 +398,34 @@ exports.getUserByEmail = async (req, res) => {
             return res.status(404).json({ message: '유저 정보 없음' });
         }
         return res.status(200).json(user);
+    } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}
+
+exports.createUser = async (req, res) => {
+    const { stNum, username, password } = req.body;
+
+    if (!stNum) {
+        return res.status(400).json({ message: '필수항목 누락: 학번' });
+    }
+    if (!username) {
+        return res.status(400).json({ message: '필수항목 누락: 유저이름' });
+    }
+    if (!password) {
+        return res.status(400).json({ message: '필수항목 누락: 패스워드' });
+    }
+
+    const reqData = {
+        stNum: stNum,
+        username: username,
+        password: password,
+    }
+
+    try {
+        const user_id = await User.registerUser(reqData);
+        return res.status(201).json({ message: `[Admin] 계정 생성 완료 / 유저ID = ${user_id}` });
     } catch (error) {
         errorlog(error);
         return res.status(500).json({ message: '내부 서버 오류' });

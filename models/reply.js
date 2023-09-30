@@ -122,9 +122,10 @@ exports.deleteReplyById = async (reqData) => {
     const { reply_id, tableName, user_id } = reqData;
     const currentDate = new Date();
 
-    let sql;
+    let checkOwnerSql, sql;
     switch (tableName) {
         case 'free':
+            checkOwnerSql = `SELECT user_id FROM reply.reply_free WHERE reply_id = ?`;
             sql = `UPDATE reply.reply_free SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply_free (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
@@ -134,6 +135,7 @@ exports.deleteReplyById = async (reqData) => {
                  WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'notice':
+            checkOwnerSql = `SELECT user_id FROM reply.reply_notice WHERE reply_id = ?`;
             sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply_notice (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
@@ -143,6 +145,7 @@ exports.deleteReplyById = async (reqData) => {
                  WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'reply':
+            checkOwnerSql = `SELECT user_id FROM reply.reply WHERE reply_id = ?`;
             sql = `UPDATE reply SET deletedAt = ? WHERE reply_id = ? AND user_id = ?;
                  INSERT INTO del_reply.del_reply (reply_id, post_id, user_id, username, reply, createdAt, deletedAt)
                  SELECT reply_id, post_id, user_id, username, reply, createdAt, ? as deletedAt
@@ -156,17 +159,38 @@ exports.deleteReplyById = async (reqData) => {
     }
 
     try {
+        // First check ownership
+        const ownerCheckResult = await new Promise((resolve, reject) => {
+            mysql.connection.query(checkOwnerSql, [reply_id], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+
+        if (ownerCheckResult.length === 0) {
+            throw new Error("댓글이 존재하지 않음");
+        }
+
+        if (ownerCheckResult[0].user_id !== user_id) {
+            throw new Error("본인의 댓글이 아닙니다");
+        }
+
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, [currentDate, reply_id, user_id, currentDate, reply_id, user_id, reply_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
                 }
+
                 const affectedRows = results[results.length - 1].affectedRows;
                 if (affectedRows === 0) {
                     const noDataError = new Error("해당 조건에 맞는 댓글이 없음");
                     return reject(noDataError);
                 }
+
                 devlog(`Post id ${reply_id} has been deleted.`);
                 return resolve(results);
             });
@@ -214,33 +238,55 @@ exports.getDeletedReply = async (reqData) => {
 
 exports.editReply = async (reqData) => {
     devlog('[Model] Reply / editReply In');
-    const { reply, reply_id, tableName } = reqData;
+    const { reply, reply_id, tableName, user_id } = reqData;
     devlog(`reply = ${reply} | reply_id = ${reply_id}`);
 
-    let sql;
+    let checkOwnerSql, sql;
     switch (tableName) {
         case 'free':
-            sql = `UPDATE reply.reply_free SET reply = ? WHERE reply_id = ?;`;
+            checkOwnerSql = `SELECT user_id FROM reply.reply_free WHERE reply_id = ?`;
+            sql = `UPDATE reply.reply_free SET reply = ? WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'notice':
-            sql = `UPDATE reply.reply_notice SET reply = ? WHERE reply_id = ?;`;
+            checkOwnerSql = `SELECT user_id FROM reply.reply_notice WHERE reply_id = ?`;
+            sql = `UPDATE reply.reply_notice SET reply = ? WHERE reply_id = ? AND user_id = ?;`;
             break;
         case 'reply':
-            sql = `UPDATE reply.reply SET reply = ? WHERE reply_id = ?;`;
+            checkOwnerSql = `SELECT user_id FROM reply.reply WHERE reply_id = ?`;
+            sql = `UPDATE reply.reply SET reply = ? WHERE reply_id = ? AND user_id = ?;`;
             break;
         default:
             throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
     try {
+        // First check ownership
+        const ownerCheckResult = await new Promise((resolve, reject) => {
+            mysql.connection.query(checkOwnerSql, [reply_id], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+
+        if (ownerCheckResult.length === 0) {
+            throw new Error("해당 조건에 맞는 댓글이 없음");
+        }
+
+        if (ownerCheckResult[0].user_id !== user_id) {
+            throw new Error("본인의 댓글이 아닙니다");
+        }
+
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [reply, reply_id], (error, results) => {
+            mysql.connection.query(sql, [reply, reply_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
                 }
                 if (results.affectedRows === 0) {
-                    return reject(new Error('No rows updated')); // 업데이트된 행이 없을 경우
+                    return reject(new Error('수정된 내용이 없음')); // 업데이트된 행이 없을 경우
                 }
                 resolve(results);
             });

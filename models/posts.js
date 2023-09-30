@@ -11,28 +11,6 @@ const {devlog, errorlog} = require("../config/config");
  * 유저 ID로 게시글 목록 불러오기
  */
 
-// 회원가입
-exports.registerUser = async (reqData) => {
-    const sql =
-        `INSERT INTO users (email, username, password, phoneNumber)
-        VALUES (${reqData.email}, ${reqData.username}, ${reqData.password}, ${reqData.phoneNumber});`
-
-    try {
-        const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, (error, results) => {
-                if (error)  {
-                    errorlog(error);
-                    return reject(error);
-                }
-                resolve(results.insertId);
-            });
-        })
-        return results;
-    } catch (error) {
-        throw error;
-    }
-}
-
 // 게시글쓰기
 exports.writePost = async (reqData) => {
     const { author_id, title, author, content, tableName } = reqData;
@@ -214,27 +192,27 @@ exports.getPostByUserId = async (reqData) => {
     switch(tableName) {
         case 'all':
             sql = `
-            (
-                SELECT * FROM posts.FreeBoard WHERE author_id = ? 
-                UNION 
-                SELECT * FROM posts.NoticeBoard WHERE author_id = ?
+            SELECT * FROM (
+                SELECT 'free' AS board_type, FreeBoard.* FROM posts.FreeBoard WHERE author_id = ?
                 UNION
-                SELECT * FROM posts.posts WHERE author_id = ?
-            )
+                SELECT 'notice' AS board_type, NoticeBoard.* FROM posts.NoticeBoard WHERE author_id = ?
+                UNION
+                SELECT 'posts' AS board_type, posts.* FROM posts.posts WHERE author_id = ?
+            ) AS results
             LIMIT ? OFFSET ?;
             `;
             params = [user_id, user_id, user_id, limit, offset];
             break;
         case 'free':
-            sql = `SELECT * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            sql = `SELECT 'free' AS board_type, * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
             params = [user_id, limit, offset];
             break;
         case 'notice':
-            sql = `SELECT * FROM posts.NoticeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            sql = `SELECT 'notice' AS board_type, * FROM posts.NoticeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
             params = [user_id, limit, offset];
             break;
         case 'posts':
-            sql = `SELECT * FROM posts.posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            sql = `SELECT 'posts' AS board_type, * FROM posts.posts WHERE author_id = ? LIMIT ? OFFSET ?;`;
             params = [user_id, limit, offset];
             break;
         default:
@@ -257,6 +235,7 @@ exports.getPostByUserId = async (reqData) => {
         throw error;
     }
 }
+
 
 // 게시글ID로 게시글 불러오기
 exports.getPostByPostId = async (reqData) => {
@@ -282,14 +261,115 @@ exports.getPostByPostId = async (reqData) => {
         const results = await new Promise ((resolve, reject) => {
             mysql.connection.query(sql, post_id, (error, results) => {
                 if (error) {
+                    errorlog(error);
                     return reject(error);
                 }
-
                 if (results.length === 0) {
                     return resolve(null);
                 }
-
                 return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+//
+exports.getPostByReply = async (reqData) => {
+    devlog("[Model] posts / getPostByReply in");
+    const { user_id, limit, offset } = reqData;
+
+    const sql = `
+        SELECT * FROM (
+            SELECT 'free' AS board_type, f.*
+            FROM reply.reply_free rf
+            JOIN posts.FreeBoard f ON rf.post_id = f.post_id
+            WHERE rf.user_id = ?
+            UNION ALL
+            SELECT 'notice' AS board_type, n.*
+            FROM reply.reply_notice rn
+            JOIN posts.NoticeBoard n ON rn.post_id = n.post_id
+            WHERE rn.user_id = ?
+            UNION ALL
+            SELECT 'posts' AS board_type, p.*
+            FROM reply.reply r
+            JOIN posts.posts p ON r.post_id = p.post_id
+            WHERE r.user_id = ?
+        ) AS combined_results
+        LIMIT ? OFFSET ?;
+    `;
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [user_id, user_id, user_id, limit, offset], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                devlog(results);
+                return resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+exports.editPostByPostId = async (reqData) => {
+    devlog('[Model] Posts / editPostByPostId In');
+    const { title, content, post_id, tableName, user_id } = reqData;
+
+    let checkOwnerSql, sql;
+    switch (tableName) {
+        case 'free':
+            checkOwnerSql = `SELECT user_id FROM posts.FreeBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.FreeBoard SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            break;
+        case 'notice':
+            checkOwnerSql = `SELECT user_id FROM posts.NoticeBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.NoticeBoard SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            break;
+        case 'posts':
+            checkOwnerSql = `SELECT user_id FROM posts.posts WHERE post_id = ?`;
+            sql = `UPDATE posts.posts SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
+    }
+
+    try {
+        // First check ownership
+        const ownerCheckResult = await new Promise((resolve, reject) => {
+            mysql.connection.query(checkOwnerSql, [post_id], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+
+        if (ownerCheckResult.length === 0) {
+            throw new Error("해당 조건에 맞는 댓글이 없음");
+        }
+
+        if (ownerCheckResult[0].user_id !== user_id) {
+            throw new Error("본인의 댓글이 아닙니다");
+        }
+
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [reply, reply_id, user_id], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                if (results.affectedRows === 0) {
+                    return reject(new Error('수정된 내용이 없음')); // 업데이트된 행이 없을 경우
+                }
+                resolve(results);
             });
         });
         return results;

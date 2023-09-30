@@ -119,3 +119,35 @@ exports.getTotalDelPosts = async (tableName) => {
         });
     });
 };
+
+exports.getTotalPostsByReply = async (user_id) => {
+    const totalPostsQuery = `
+        SELECT COUNT(*) as totalPosts 
+        FROM (
+            SELECT 1
+            FROM reply.reply_free rf
+            JOIN posts.FreeBoard f ON rf.post_id = f.post_id
+            WHERE rf.user_id = ?
+            UNION ALL
+            SELECT 1
+            FROM reply.reply_notice rn
+            JOIN posts.NoticeBoard n ON rn.post_id = n.post_id
+            WHERE rn.user_id = ?
+            UNION ALL
+            SELECT 1
+            FROM reply.reply r
+            JOIN posts.posts p ON r.post_id = p.post_id
+            WHERE r.user_id = ?
+        ) as subquery;
+    `;
+
+    return new Promise((resolve, reject) => {
+        db.connection.query(totalPostsQuery, [user_id, user_id, user_id], (error, results) => {
+            if (error) {
+                errorlog(error);
+                return reject(error);
+            }
+            resolve(results[0].totalPosts);
+        });
+    });
+};

@@ -150,7 +150,7 @@ exports.getReplyByUserId = async (req, res) => {
 
 exports.deleteReplyById = async (req, res) => {
     const { reply_id, tableName } = req.params;
-    const { user_id } = req.session.user_id;
+    const user_id = req.session.user_id;
 
     if (!reply_id) {
         return res.status(400).json({ message: '필수항목 누락: reply_id 파라미터' });
@@ -175,6 +175,9 @@ exports.deleteReplyById = async (req, res) => {
         errorlog(error);
         if (error.message === "해당 조건에 맞는 댓글이 없음") {
             return res.status(404).json({ message: '댓글이 존재하지 않음' });
+        }
+        if (error.message === "본인의 댓글이 아닙니다") {
+            return res.status(403).json({ message: '본인의 댓글이 아닙니다' });
         }
         return res.status(500).json({ message: '내부 서버 오류' });
     }
@@ -218,6 +221,7 @@ exports.getDeletedReply = async (req, res) => {
 exports.editReply = async (req, res) => {
     const { reply } = req.body;
     const { reply_id, tableName } = req.params;
+    const user_id = req.session.user_id;
 
     devlog(`[Cont] editReply req.session = ${req.session}`);
     devlog(`[Cont] editReply content = ${reply}`);
@@ -237,6 +241,7 @@ exports.editReply = async (req, res) => {
         reply: reply,
         reply_id: reply_id,
         tableName: tableName,
+        user_id: user_id,
     }
 
     try {
@@ -247,6 +252,12 @@ exports.editReply = async (req, res) => {
         return res.status(201).json({ message: `댓글ID = ${reply_id} 내용 수정 완료` });
     } catch (error) {
         errorlog(error);
+        if (error.message === "해당 조건에 맞는 댓글이 없음") {
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
+        }
+        if (error.message === "본인의 댓글이 아닙니다") {
+            return res.status(403).json({ message: '본인의 댓글이 아닙니다' });
+        }
         return res.status(500).json({ message: '내부 서버 오류'});
     }
 }

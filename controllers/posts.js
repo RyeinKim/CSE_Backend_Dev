@@ -4,6 +4,7 @@ const { devlog, errorlog } = require("../config/config");
 const db = require("../config/database");
 const userUtils = require("../utils/userUtils");
 const postsUtils = require("../utils/postsUtils");
+const Reply = require("../models/reply");
 
 /**
  * 회원가입
@@ -15,38 +16,6 @@ const postsUtils = require("../utils/postsUtils");
  * 유저 ID로 게시글 목록 불러오기
  */
 
-// 회원가입
-exports.registerUser = async (req, res) => {
-    const { email, username, password, phoneNumber } = req.body;
-
-    if (!email) {
-        return res.status(400).json({ message: '필수항목 누락: 이메일' });
-    }
-    if (!username) {
-        return res.status(400).json({ message: '필수항목 누락: 유저이름' });
-    }
-    if (!password) {
-        return res.status(400).json({ message: '필수항목 누락: 패스워드' });
-    }
-    if (!phoneNumber) {
-        return res.status(400).json({ message: '필수항목 누락: 휴대폰번호' });
-    }
-
-    const reqData = {
-        email: mysql.escape(email),
-        username: mysql.escape(username),
-        password: mysql.escape(password),
-        phoneNumber: mysql.escape(phoneNumber)
-    }
-
-    try {
-        const user_id = await Post.registerUser(reqData);
-        return res.status(201).json({ message: `가입완료 / 유저ID = ${user_id}` });
-    } catch (error) {
-        errorlog(error);
-        return res.status(500).json({ message: '내부 서버 오류' });
-    }
-}
 
 // 게시글 쓰기
 exports.writePost = async (req, res) => {
@@ -260,6 +229,86 @@ exports.getPostByPostId = async (req, res) => {
     } catch (error) {
         errorlog(error);
         return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}
+
+//
+exports.getPostByReply = async (req, res) => {
+    const offset = parseInt(req.query.offset);
+    const limit = parseInt(req.query.limit);
+    const user_id = req.session.user_id;
+
+    if (offset === undefined || offset === null || isNaN(offset) || offset < 0) {
+        return res.status(400).json({ message: '정상적인 offset 값 필요' });
+    }
+    if (!limit || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ message: '정상적인 limit 값 필요' });
+    }
+
+    const reqData = {
+        user_id: user_id,
+        offset: offset,
+        limit: limit,
+    };
+
+    try {
+        const totalPosts = await postsUtils.getTotalPostsByReply(user_id);
+        const posts = await Post.getPostByReply(reqData);
+        devlog(`[Cont] Posts / getPostByUserId posts = ${posts}`);
+
+        if (!posts) {
+            return res.status(404).json({ message: '게시글이 존재하지 않음' });
+        }
+        return res.status(200).json({ totalPosts: totalPosts, message: posts});
+    } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}
+
+exports.editPostByPostId = async (req, res) => {
+    const { title, content } = req.body;
+    const { post_id, tableName } = req.params;
+    const user_id = req.session.user_id;
+
+    devlog(`[Cont] editPostByPostId req.session = ${req.session}`);
+
+    if (!title) {
+        return res.status(400).json({ message: '필수항목 누락: reply' });
+    }
+    if (!content) {
+        return res.status(400).json({ message: '필수항목 누락: content' });
+    }
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
+    if (!post_id) {
+        return res.status(400).json({ message: '필수항목 누락: post_id 파라미터' });
+    }
+
+    const reqData = {
+        title: title,
+        content: content,
+        post_id: post_id,
+        tableName: tableName,
+        user_id: user_id,
+    }
+
+    try {
+        const editPost = await Post.editPostByPostId(reqData);
+        if (!editPost) {
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
+        }
+        return res.status(201).json({ message: `댓글ID = ${post_id} 내용 수정 완료` });
+    } catch (error) {
+        errorlog(error);
+        if (error.message === "해당 조건에 맞는 댓글이 없음") {
+            return res.status(404).json({ message: '댓글이 존재하지 않음' });
+        }
+        if (error.message === "본인의 댓글이 아닙니다") {
+            return res.status(403).json({ message: '본인의 댓글이 아닙니다' });
+        }
+        return res.status(500).json({ message: '내부 서버 오류'});
     }
 }
 
