@@ -10,6 +10,9 @@ exports.getTotalPosts = async (tableName) => {
         case 'notice':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.NoticeBoard;`;
             break;
+        case 'qna':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard;`;
+            break;
         case 'posts':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts;`;
             break;
@@ -33,7 +36,7 @@ exports.getTotalPostsByUserId = async (reqData) => {
 
     if (tableName === 'all') {
         const getFreeCount = () => new Promise((resolve, reject) => {
-            const freeQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_free WHERE author_id = ?;`;
+            const freeQuery = `SELECT COUNT(*) AS totalPosts FROM posts.FreeBoard WHERE author_id = ?;`;
             db.connection.query(freeQuery, user_id, (error, results) => {
                 if (error) reject(error);
                 else resolve(results[0].totalPosts);
@@ -41,15 +44,23 @@ exports.getTotalPostsByUserId = async (reqData) => {
         });
 
         const getNoticeCount = () => new Promise((resolve, reject) => {
-            const noticeQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_notice WHERE author_id = ?;`;
+            const noticeQuery = `SELECT COUNT(*) AS totalPosts FROM posts.NoticeBoard WHERE author_id = ?;`;
             db.connection.query(noticeQuery, user_id, (error, results) => {
                 if (error) reject(error);
                 else resolve(results[0].totalPosts);
             });
         });
 
+        const getQaCount = () => new Promise((resolve, reject) => {
+            const QaQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard WHERE author_id = ?;`;
+            db.connection.query(QaQuery, user_id, (error, results) => {
+                if (error) reject(error);
+                else resolve(results[0].totalPosts);
+            });
+        });
+
         const getPostsCount = () => new Promise((resolve, reject) => {
-            const postsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.delete_posts WHERE author_id = ?;`;
+            const postsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts WHERE author_id = ?;`;
             db.connection.query(postsQuery, user_id, (error, results) => {
                 if (error) reject(error);
                 else resolve(results[0].totalPosts);
@@ -59,9 +70,10 @@ exports.getTotalPostsByUserId = async (reqData) => {
         try {
             const freeCount = await getFreeCount();
             const noticeCount = await getNoticeCount();
+            const qaCount = await getQaCount();
             const postsCount = await getPostsCount();
 
-            return freeCount + noticeCount + postsCount;
+            return freeCount + noticeCount + qaCount + postsCount;
         } catch (error) {
             errorlog(error);
             throw error;
@@ -74,6 +86,9 @@ exports.getTotalPostsByUserId = async (reqData) => {
             break;
         case 'notice':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.NoticeBoard WHERE author_id = ?;`;
+            break;
+        case 'qna':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard WHERE author_id = ?;`;
             break;
         case 'posts':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts WHERE author_id = ?;`;
@@ -101,6 +116,9 @@ exports.getTotalDelPosts = async (tableName) => {
             break;
         case 'notice':
             totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_notice;`;
+            break;
+        case 'qna':
+            totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_qa;`;
             break;
         case 'posts':
             totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.delete_posts;`;
@@ -132,6 +150,11 @@ exports.getTotalPostsByReply = async (user_id) => {
             SELECT 1
             FROM reply.reply_notice rn
             JOIN posts.NoticeBoard n ON rn.post_id = n.post_id
+            WHERE rn.user_id = ?
+            UNION ALL
+            SELECT 1
+            FROM reply.reply_qa rn
+            JOIN posts.QABoard n ON rn.post_id = n.post_id
             WHERE rn.user_id = ?
             UNION ALL
             SELECT 1

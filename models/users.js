@@ -1,5 +1,5 @@
 const mysql = require('../config/database');
-const { devlog, errorlog} = require("../config/config");
+const { devlog, errorlog } = require("../config/config");
 
 /**
  * 회원 정보 목록 조회
@@ -9,26 +9,7 @@ const { devlog, errorlog} = require("../config/config");
  * 이메일로 유저정보 가져오기
  */
 
-// 회원 정보 목록 조회
-exports.loadUsers = async (reqData) => {
-    devlog("[Model] loadUsers in");
-    const { limit, offset } = reqData;
-    const sql = `SELECT * FROM users LIMIT ? OFFSET ?;`;
 
-    try {
-        const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [limit, offset], (error, results) => {
-                if (error) {
-                    return reject(error);
-                }
-                return resolve(results);
-            });
-        });
-        return results;
-    } catch (error) {
-        throw error;
-    }
-}
 
 // 회원 전화번호 업데이트
 exports.updateUser = async (reqData) => {
@@ -81,51 +62,19 @@ exports.deleteUser = async (user_id) => {
     }
 }
 
-// 유저ID로 회원 정보 삭제
-exports.deleteUserByUserId = async (user_id) => {
-    devlog(`[Model] users / deleteUserByUserId`);
-
-    const currentDate = new Date();
-    const sql = `UPDATE users SET deleteAt = ? WHERE id = ?;`;
-
-    try {
-        const result = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [currentDate, user_id], (error, result) => {
-                if (error) {
-                    return reject(error);
-                }
-                if (result.affectedRows === 0) {
-                    return resolve(null);
-                }
-                devlog(`User with id ${user_id} has been deleted.`);
-                return resolve(result);
-            });
-        });
-        return result;
-    } catch (error) {
-        throw error;
-    }
-}
-
 // 회원 로그인
-exports.loginUser = async (reqData) => {
+exports.loginUser = async (email) => {
     devlog(`[Model] users / loginUser`);
-    const reqPassword = reqData.password;
-    devlog(`reqPassword = `, reqPassword);
-
-    const sql = `SELECT * FROM users WHERE email = '${reqData.email}'`;
+    const sql = 'SELECT * FROM users WHERE email = ?';
 
     try {
         const result = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, (error, result) => {
+            mysql.connection.query(sql, [email], (error, result) => {
                 if (error) {
+                    errorlog(error);
                     return reject(error);
                 }
-                if (!result[0] || reqPassword !== result[0].password) {
-                    return resolve(null);
-                }
-                devlog(JSON.stringify(result, null, 2));
-                resolve(result[0].id);
+                resolve(result[0]);
             });
         });
         return result;
@@ -138,15 +87,34 @@ exports.loginUser = async (reqData) => {
 exports.registerUser = async (reqData) => {
     const { stNum, email, username, password, phoneNumber } = reqData;
 
+    const checkSql = `
+        SELECT * FROM users WHERE email = ?;
+    `;
+
     const sql = `
         UPDATE users
         SET email = ?, password = ?, phoneNumber = ?
-        WHERE stNum = ? AND username = ?;
+        WHERE stNum = ? AND username = ? AND password IS NULL;
     `;
 
     try {
+        // 이메일 중복 체크
+        const existingUsers = await new Promise((resolve, reject) => {
+            mysql.connection.query(checkSql, [email], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+
+        if (existingUsers.length > 0) {
+            throw new Error('중복되는 이메일');
+        }
+
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [email,password, phoneNumber, stNum, username],(error, results) => {
+            mysql.connection.query(sql, [email, password, phoneNumber, stNum, username],(error, results) => {
                 if (error)  {
                     errorlog(error);
                     return reject(error);
@@ -256,29 +224,4 @@ exports.getUserById = async (user_id) => {
             return resolve(user);
         });
     });
-}
-
-exports.createUser = async(reqData) => {
-    const { stNum, username, password } = reqData;
-
-    const sql =
-        `INSERT INTO users (stNum, username, password)
-        VALUES (
-            ?, ?, ?
-        );`
-
-    try {
-        const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [stNum, username, password],(error, results) => {
-                if (error)  {
-                    errorlog(error);
-                    return reject(error);
-                }
-                resolve(results.insertId);
-            });
-        })
-        return results;
-    } catch (error) {
-        throw error;
-    }
 }

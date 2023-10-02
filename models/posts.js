@@ -24,6 +24,10 @@ exports.writePost = async (reqData) => {
             sql = `INSERT INTO posts.NoticeBoard (author_id, title, author, content)
                 VALUES (?, ?, ?, ?);`;
             break;
+        case 'qna':
+            sql = `INSERT INTO posts.QABoard (author_id, title, author, content)
+                VALUES (?, ?, ?, ?);`;
+            break;
         case 'posts':
             sql = `INSERT INTO posts.posts (author_id, title, author, content)
                 VALUES (?, ?, ?, ?);`;
@@ -40,7 +44,7 @@ exports.writePost = async (reqData) => {
                     errorlog(error);
                     return reject(error);
                 }
-                return resolve(results.insertId);
+                return resolve({ newPostId: results.insertId });
             });
         });
         return results;
@@ -61,6 +65,9 @@ exports.getPostsAll = async (reqData) => {
             break;
         case 'notice':
             sql = `SELECT * FROM posts.NoticeBoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'qna':
+            sql = `SELECT * FROM posts.QABoard LIMIT ? OFFSET ?;`;
             break;
         case 'posts':
             sql = `SELECT * FROM posts.posts LIMIT ? OFFSET ?;`;
@@ -90,9 +97,10 @@ exports.deletePostById = async (reqData) => {
     const { tableName, post_id, user_id } = reqData;
     const currentDate = new Date();
 
-    let sql;
+    let checkOwnerSql, sql;
     switch(tableName) {
         case 'free':
+            checkOwnerSql = `SELECT author_id FROM posts.FreeBoard WHERE post_id = ?`;
             sql = `UPDATE posts.FreeBoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.del_free (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
@@ -102,6 +110,7 @@ exports.deletePostById = async (reqData) => {
                  WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'notice':
+            checkOwnerSql = `SELECT author_id FROM posts.NoticeBoard WHERE post_id = ?`;
             sql = `UPDATE posts.NoticeBoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.del_notice (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
@@ -110,7 +119,18 @@ exports.deletePostById = async (reqData) => {
                  DELETE FROM posts.NoticeBoard
                  WHERE post_id = ? AND author_id = ?;`;
             break;
+        case 'qna':
+            checkOwnerSql = `SELECT author_id FROM posts.QABoard WHERE post_id = ?`;
+            sql = `UPDATE posts.QABoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
+                 INSERT INTO del_posts.del_qa (post_id, author_id, author, title, content, createAt, deletedAt)
+                 SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
+                 FROM posts.QABoard
+                 WHERE post_id = ? AND author_id = ?;
+                 DELETE FROM posts.NoticeBoard
+                 WHERE post_id = ? AND author_id = ?;`;
+            break;
         case 'posts':
+            checkOwnerSql = `SELECT author_id FROM posts.posts WHERE post_id = ?`;
             sql = `UPDATE posts.posts SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
                  INSERT INTO del_posts.delete_posts (post_id, author_id, author, title, content, createAt, deletedAt)
                  SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
@@ -123,18 +143,30 @@ exports.deletePostById = async (reqData) => {
             throw new Error(`올바르지 않은 tableName: ${tableName}`);
     }
 
-
     try {
+        // First check ownership
+        const ownerCheckResult = await new Promise((resolve, reject) => {
+            mysql.connection.query(checkOwnerSql, [post_id], (error, results) => {
+                if (error) {
+                    errorlog(error);
+                    return reject(error);
+                }
+                resolve(results);
+            });
+        });
+
+        if (ownerCheckResult.length === 0) {
+            throw new Error("해당 조건에 맞는 게시글이 없음");
+        }
+
+        if (ownerCheckResult[0].author_id !== user_id) {
+            throw new Error("본인의 게시글이 아닙니다");
+        }
         const results = await new Promise((resolve, reject) => {
             mysql.connection.query(sql, [currentDate, post_id, user_id, currentDate, post_id, user_id, post_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);
-                }
-                const affectedRows = results[results.length - 1].affectedRows;
-                if (affectedRows === 0) {
-                    const noDataError = new Error("해당 조건에 맞는 게시글이 없음");
-                    return reject(noDataError);
                 }
                 devlog(`Post id ${post_id} has been deleted.`);
                 return resolve(results);
@@ -158,6 +190,9 @@ exports.getDeletedPosts = async (reqData) => {
             break;
         case 'notice':
             sql = `SELECT * FROM del_posts.del_notice LIMIT ? OFFSET ?;`;
+            break;
+        case 'qna':
+            sql = `SELECT * FROM del_posts.QABoard LIMIT ? OFFSET ?;`;
             break;
         case 'posts':
             sql = `SELECT * FROM del_posts.delete_posts LIMIT ? OFFSET ?;`;
@@ -197,6 +232,8 @@ exports.getPostByUserId = async (reqData) => {
                 UNION
                 SELECT 'notice' AS board_type, NoticeBoard.* FROM posts.NoticeBoard WHERE author_id = ?
                 UNION
+                SELECT 'qna' AS board_type, posts.* FROM posts.QABoard WHERE author_id = ?
+                UNION
                 SELECT 'posts' AS board_type, posts.* FROM posts.posts WHERE author_id = ?
             ) AS results
             LIMIT ? OFFSET ?;
@@ -209,6 +246,10 @@ exports.getPostByUserId = async (reqData) => {
             break;
         case 'notice':
             sql = `SELECT 'notice' AS board_type, * FROM posts.NoticeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            params = [user_id, limit, offset];
+            break;
+        case 'qna':
+            sql = `SELECT 'qna' AS board_type, * FROM posts.QABoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
             params = [user_id, limit, offset];
             break;
         case 'posts':
@@ -249,6 +290,9 @@ exports.getPostByPostId = async (reqData) => {
             break;
         case 'notice':
             sql = 'SELECT * FROM posts.NoticeBoard WHERE post_id = ?';
+            break;
+        case 'qna':
+            sql = 'SELECT * FROM posts.QABoard WHERE post_id = ?';
             break;
         case 'posts':
             sql = 'SELECT * FROM posts.posts WHERE post_id = ?';
@@ -293,6 +337,11 @@ exports.getPostByReply = async (reqData) => {
             JOIN posts.NoticeBoard n ON rn.post_id = n.post_id
             WHERE rn.user_id = ?
             UNION ALL
+            SELECT 'qna' AS board_type, n.*
+            FROM reply.reply_qa rn
+            JOIN posts.QABoard n ON rn.post_id = n.post_id
+            WHERE rn.user_id = ?
+            UNION ALL
             SELECT 'posts' AS board_type, p.*
             FROM reply.reply r
             JOIN posts.posts p ON r.post_id = p.post_id
@@ -325,16 +374,20 @@ exports.editPostByPostId = async (reqData) => {
     let checkOwnerSql, sql;
     switch (tableName) {
         case 'free':
-            checkOwnerSql = `SELECT user_id FROM posts.FreeBoard WHERE post_id = ?`;
-            sql = `UPDATE posts.FreeBoard SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            checkOwnerSql = `SELECT author_id FROM posts.FreeBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.FreeBoard SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'notice':
-            checkOwnerSql = `SELECT user_id FROM posts.NoticeBoard WHERE post_id = ?`;
-            sql = `UPDATE posts.NoticeBoard SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            checkOwnerSql = `SELECT author_id FROM posts.NoticeBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.NoticeBoard SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
+            break;
+        case 'qna':
+            checkOwnerSql = `SELECT author_id FROM posts.QABoard WHERE post_id = ?`;
+            sql = `UPDATE posts.QABoard SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'posts':
-            checkOwnerSql = `SELECT user_id FROM posts.posts WHERE post_id = ?`;
-            sql = `UPDATE posts.posts SET title = ?, content = ? WHERE post_id = ? AND user_id = ?;`;
+            checkOwnerSql = `SELECT author_id FROM posts.posts WHERE post_id = ?`;
+            sql = `UPDATE posts.posts SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
             break;
         default:
             throw new Error(`올바르지 않은 tableName: ${tableName}`);
@@ -353,15 +406,15 @@ exports.editPostByPostId = async (reqData) => {
         });
 
         if (ownerCheckResult.length === 0) {
-            throw new Error("해당 조건에 맞는 댓글이 없음");
+            throw new Error("해당 조건에 맞는 게시글이 없음");
         }
 
-        if (ownerCheckResult[0].user_id !== user_id) {
-            throw new Error("본인의 댓글이 아닙니다");
+        if (ownerCheckResult[0].author_id !== user_id) {
+            throw new Error("본인의 게시글이 아닙니다");
         }
 
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [reply, reply_id, user_id], (error, results) => {
+            mysql.connection.query(sql, [title, content, post_id, user_id], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);

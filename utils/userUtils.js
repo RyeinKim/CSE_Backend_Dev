@@ -1,8 +1,8 @@
 const mysql = require("../config/database");
 const {devlog, errorlog} = require("../config/config");
+const db = require("../config/database");
 
 exports.changeUserPass = async (reqData) => {
-    console.log("model IN!!!!!!!!!!!!!");
     const { email, username, phonenum, newPass } = reqData;
     const sql = 'UPDATE users SET password = ? WHERE email = ? AND username = ? AND phoneNumber = ?';
 
@@ -69,3 +69,16 @@ exports.getUserByUserId = async (user_id) => {
         });
     });
 }
+
+exports.getTotalUsers = async () => {
+    const totalUsersQuery = `SELECT COUNT(*) AS totalusers FROM my_db.users WHERE deleteAt IS NULL;`;
+
+    return new Promise((resolve, reject) => {
+        db.connection.query(totalUsersQuery, (error, results) => {
+            if (error) {
+                return reject(error);
+            }
+            resolve(results[0].totalusers);
+        });
+    });
+};
