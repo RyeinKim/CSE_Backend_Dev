@@ -24,7 +24,13 @@ dotenv.config({ path: '.env.keys' });
     allowedHeaders: ['Content-Type', 'Authorization']
 }));*/
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'http://49.247.43.150:3000');
+    const allowedOrigins = ['http://49.247.43.150:3000', 'another_allowed_origin'];
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    // 다른 CORS 헤더 설정
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
     res.header('Access-Control-Allow-Credentials', true);
