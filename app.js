@@ -100,14 +100,14 @@ app.use((req, res, next) => {
     next(error);
 });
 
-app.use((err, req, res, next) => {
+/*app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.send({
         error: {
             message: err.message,
         },
     });
-});
+});*/
 
 /*server.listen(443, () => {
     devlog(`HTTPS listening on port 443`);
