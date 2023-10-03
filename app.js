@@ -97,9 +97,9 @@ app.use((err, req, res, next) => {
     });
 });
 
-server.listen(443, () => {
+/*server.listen(443, () => {
     devlog(`HTTPS listening on port 443`);
-});
+});*/
 
 app.listen(port, () => {
     devlog(`HTTP listening on port ${port}`);
