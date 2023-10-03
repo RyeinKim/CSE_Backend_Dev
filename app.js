@@ -28,7 +28,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:80', // API가 호스팅될 서버의 URL을 입력합니다.
+                url: 'http://49.247.43.150:80', // API가 호스팅될 서버의 URL을 입력합니다.
             },
         ],
     },
@@ -75,7 +75,7 @@ devlog(`HTTPS certificate authority loaded.`);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://49.247.43.150:3000',
     credentials: true
 }));
 devlog(`Middleware loaded.`);
