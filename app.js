@@ -18,7 +18,7 @@ dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
 app.use((req, res, next) => {
-    const allowedOrigins = ['http://49.247.43.150:3000', 'another_allowed_origin'];
+    const allowedOrigins = ['*', 'http://49.247.43.150:3000'];
     const origin = req.headers.origin;
 
     if (allowedOrigins.includes(origin)) {
