@@ -17,19 +17,10 @@ const port = 80;
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
-app.use((req, res, next) => {
-    const allowedOrigins = ['*', 'http://49.247.43.150:3000'];
-    const origin = req.headers.origin;
-
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    // 다른 CORS 헤더 설정
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    next();
-});
+app.use(cors({
+    origin: 'http://49.247.43.150:3000',
+    credentials: true,
+}));
 devlog(`CORS loaded.`);
 
 devlog(`CORS loaded.`);
