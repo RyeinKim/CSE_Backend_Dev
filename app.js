@@ -17,12 +17,19 @@ const port = 80;
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
-app.use(cors({
+/*app.use(cors({
     origin: 'http://49.247.43.150:3000', // 여기에 프론트엔드 서버의 주소를 넣어주세요.
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
-}));
+}));*/
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'http://49.247.43.150:3000');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH');
+    res.header('Access-Control-Allow-Credentials', true);
+    next();
+});
 devlog(`CORS loaded.`);
 
 // Swagger
