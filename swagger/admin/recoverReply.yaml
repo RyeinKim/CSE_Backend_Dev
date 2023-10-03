@@ -1,0 +1,25 @@
+/reply/recover/:tableName/:reply_id:
+  patch:
+    description: "[관리자 기능] 삭제된 댓글 복구 하기"
+    parameters:
+      - name: tableName
+        in: path
+        description: "복구할 댓글이 있던 게시판 이름 (공지사항 = notice, 자유게시판 = free, 질문답변 = qna)"
+        required: true
+        schema:
+          type: string
+      - name: reply_id
+        in: path
+        description: "복구할 댓글의 ID"
+        required: true
+        schema:
+          type: integer
+    responses:
+      '201':
+        description: "댓글이 복구 완료되었을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 댓글ID('reply_id')이(가) 필수항목 입니다."
+      '404':
+        description: "복구하려는 댓글이 없을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

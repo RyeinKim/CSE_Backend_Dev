@@ -1,0 +1,51 @@
+/admin/createUser:
+  post:
+    tags:
+      - Admin
+    description: "[관리자 기능] 유저 기본 정보 생성"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              stNum:
+                type: string
+                description: "학번"
+                example: "20190001"
+              username:
+                type: string
+                description: "이름"
+                example: "홍길동"
+    responses:
+      '201':
+        description: "유저 기본 정보가 생성 완료되었을 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "[Admin] 계정 생성 완료 / 유저ID = {user_id}"
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 학번('stNum'), 유저이름('username')이(가) 필수항목 입니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "필수항목 누락: 학번"
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "내부 서버 오류"

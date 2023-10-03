@@ -1,0 +1,29 @@
+/posts/delete/:tableName/:post_id:
+  delete:
+    tags:
+      - Posts
+    description: "게시글ID로 게시글 삭제하기"
+    parameters:
+      - name: tableName
+        in: path
+        description: "삭제할 게시글이 존재하는 게시판 이름"
+        required: true
+        schema:
+          type: string
+      - name: post_id
+        in: path
+        description: "삭제할 게시글 ID"
+        required: true
+        schema:
+          type: integer
+    responses:
+      '201':
+        description: "요청된 ID의 게시글을 삭제 완료했을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tabeName'), 삭제할 게시글ID('post_id')이(가) 필수항목 입니다."
+      '403':
+        description: "삭제할 게시글이 자신의 게시물이 아닐 때 반환됩니다."
+      '404':
+        description: "삭제할 게시글이 존재하지 않을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

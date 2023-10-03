@@ -17,7 +17,9 @@
     "express-mysql-session": "^3.0.0",
     "express-session": "^1.17.3",
     "memorystore": "^1.6.7",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

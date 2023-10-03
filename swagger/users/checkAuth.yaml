@@ -1,0 +1,40 @@
+/users/check-auth:
+  get:
+    tags:
+      - User
+    description: "로그인 여부 확인"
+    responses:
+      '200':
+        description: "로그인이 되어있는 상태일 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                authenticated:
+                  type: boolean
+                  example: true
+                user_id:
+                  type: string
+                  example: "5"
+                role:
+                  type: string
+                  enum:
+                    - user
+                    - council
+                    - admin
+                    - webmaster
+                  default: "user"
+      '401':
+        description: "로그인이 되어있지 않은 상태일 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "로그인 필요"
+                authenticated:
+                  type: boolean
+                  example: false

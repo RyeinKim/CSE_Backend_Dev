@@ -1,0 +1,19 @@
+/admin/deleteUser/:user_id:
+  delete:
+    description: "[관리자 기능] 계정 삭제하기"
+    parameters:
+      - name: user_id
+        in: path
+        description: "삭제할 계정의 ID"
+        required: true
+        schema:
+          type: integer
+    responses:
+      '201':
+        description: "계정 정보가 삭제 완료되었을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 계정ID('user_id')이(가) 필수항목 입니다."
+      '404':
+        description: "삭제하려는 계정 정보가 없을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

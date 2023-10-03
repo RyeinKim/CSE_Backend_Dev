@@ -138,10 +138,10 @@ exports.registerUser = async (req, res) => {
     } catch (error) {
         errorlog(error);
         if (error.message === '일치하는 계정 정보 없음') {
-            return res.status(400).json({ message: '일치하는 계정 정보가 없습니다.' });
+            return res.status(404).json({ message: '일치하는 계정 정보가 없습니다.' });
         }
         if (error.message === '중복되는 이메일') {
-            return res.status(400).json({ message: '이메일이 이미 사용 중입니다.' });
+            return res.status(409).json({ message: '이메일이 이미 사용 중입니다.' });
         }
         return res.status(500).json({ message: '내부 서버 오류' });
     }
@@ -235,7 +235,7 @@ exports.changeUserPass = async (req, res) => {
     try {
         const user = await userUtils.changeUserPass(reqData);
         if (!user) {
-            return res.status(400).json({ message: '일치하는 유저 정보가 없습니다.' });
+            return res.status(404).json({ message: '일치하는 유저 정보가 없습니다.' });
         }
         return res.status(201).json({ message: `패스워드 변경 완료` });
     } catch (error) {

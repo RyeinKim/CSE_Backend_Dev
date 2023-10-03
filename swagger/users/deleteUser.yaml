@@ -1,0 +1,39 @@
+/**
+ * @swagger
+ * /users
+ *   delete:
+ *     tags:
+ *       - User
+ *     description: "회원탈퇴 기능 (로그인 된 사용자만 가능)"
+ *     responses:
+ *       '201':
+ *         description: "사용자 계정이 성공적으로 삭제되었을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "회원 탈퇴 완료"
+ *       '404':
+ *         description: "삭제할 유저 정보가 없을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "유저 정보 없음"
+ *       '500':
+ *         description: "서버 내부 오류가 발생했을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "내부 서버 오류"
+ */

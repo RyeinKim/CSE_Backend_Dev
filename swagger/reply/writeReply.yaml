@@ -1,0 +1,33 @@
+/posts/reply/:tableName:
+  post:
+    tags:
+      - Reply
+    description: "새로운 댓글 작성"
+    parameters:
+      - name: tableName
+        in: path
+        description: "댓글이 작성될 게시글이 존재하는 게시판 이름"
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reply:
+                type: string
+                description: "게시글 내용"
+                example: "이것은 내용입니다. 본분 내용을 작성합니다."
+              post_id:
+                type: string
+                description: "댓글이 작성될 게시글 ID"
+    responses:
+      '201':
+        description: "새로운 댓글이 생성 완료되었을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 내용('reply'), 게시글ID('post_id')이(가) 필수항목 입니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

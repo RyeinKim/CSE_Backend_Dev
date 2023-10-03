@@ -1,0 +1,10 @@
+/users/logout:
+  get:
+    tags:
+      - User
+    description: "[로그인 필요] 로그아웃 기능"
+    responses:
+      '200':
+        description: "로그아웃이 성공했을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

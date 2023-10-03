@@ -1,0 +1,34 @@
+/delReply/:tableName:
+  get:
+    tags:
+      - Reply
+    description: "삭제된 댓글 모두 불러오기"
+    parameters:
+      - name: tableName
+        in: path
+        description: "삭제된 댓글이 있던 게시판 이름"
+        required: true
+        schema:
+          type: string
+          enum: [all, free, notice, qna]
+      - name: offset
+        in: query
+        description: "출력할 댓글 시작 값"
+        required: true
+        schema:
+          type: integer
+          default: 0
+      - name: limit
+        in: query
+        description: "불러올 댓글 개수"
+        required: true
+        schema:
+          type: integer
+          default: 10
+    responses:
+      '200':
+        description: "선택한 게시판의 모든 삭제된 댓글을 불러왔을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 시작값('offset'), 불러올 개수('limit')이(가) 필수항목 입니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

@@ -20,10 +20,6 @@ exports.writeReply = async (req, res) => {
     try {
         const user = await replyUtils.getUserById(user_id);
 
-        if (!user) {
-            return res.status(401).json({ message: '타겟유저가 존재하지 않음' });
-        }
-
         const reqData = {
             post_id: post_id,
             reply: reply,

@@ -1,0 +1,36 @@
+/posts/write/:tableName:
+  post:
+    tags:
+      - Posts
+    description: "새로운 게시글 작성"
+    parameters:
+      - name: tableName
+        in: path
+        description: "게시글이 작성될 게시판 이름"
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                description: "게시글 제목"
+                example: "이것은 제목입니다."
+              content:
+                type: string
+                description: "게시글 내용"
+                example: "이것은 내용입니다. 본분 내용을 작성합니다."
+    responses:
+      '201':
+        description: "새로운 게시글이 생성 완료되었을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 제목('title'), 내용('content')이(가) 필수항목 입니다."
+      '401':
+        description: "작성자ID 가 확인되지 않았을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

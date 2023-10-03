@@ -1,0 +1,42 @@
+/reply/:tableName/user/:user_id:
+  get:
+    tags:
+      - Reply
+    description: "유저ID로 해당 유저가 작성한 댓글 모두 불러오기"
+    parameters:
+      - name: tableName
+        in: path
+        description: "댓글을 불러올 게시글이 존재하는 게시판 이름"
+        required: true
+        schema:
+          type: string
+          enum: [all, free, notice, qna]
+      - name: user_id
+        in: path
+        description: "불러올 댓글의 작성자 ID"
+        required: true
+        schema:
+          type: integer
+      - name: offset
+        in: query
+        description: "출력할 댓글 시작 값"
+        required: true
+        schema:
+          type: integer
+          default: 0
+      - name: limit
+        in: query
+        description: "불러올 댓글의 개수"
+        required: true
+        schema:
+          type: integer
+          default: 10
+    responses:
+      '200':
+        description: "요청된 ID의 게시글의 댓글을 모두 불러왔을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 작성자ID('user_id'), 시작값('offset'), 불러올 개수('limit')이(가) 필수항목 입니다."
+      '404':
+        description: "해당 유저가 작성한 댓글이 존재하지 않을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

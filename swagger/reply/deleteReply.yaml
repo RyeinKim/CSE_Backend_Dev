@@ -1,0 +1,30 @@
+/reply/delete/:tableName/:reply_id:
+  delete:
+    tags:
+      - Reply
+    description: "댓글ID로 댓글 삭제하기"
+    parameters:
+      - name: tableName
+        in: path
+        description: "삭제할 댓글이 존재하는 게시글의 게시판 이름"
+        required: true
+        schema:
+          type: string
+          enum: [all, free, notice, qna]
+      - name: reply_id
+        in: path
+        description: "삭제할 댓글 ID"
+        required: true
+        schema:
+          type: integer
+    responses:
+      '201':
+        description: "요청된 ID의 댓글을 삭제 완료했을 때 반환됩니다."
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tabeName'), 삭제할 댓글ID('reply_id')이(가) 필수항목 입니다."
+      '403':
+        description: "삭제할 댓글이 자신의 댓글이 아닐 때 반환됩니다."
+      '404':
+        description: "삭제할 댓글 존재하지 않을 때 반환됩니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."

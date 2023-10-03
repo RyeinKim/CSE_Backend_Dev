@@ -1,0 +1,72 @@
+/users/auth:
+  post:
+    tags:
+      - User
+    description: "로그인"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                description: "로그인 이메일"
+                example: "test@test.kr"
+              password:
+                type: string
+                description: "로그인 패스워드"
+                example: "12345"
+    responses:
+      '200':
+        description: "로그인 성공했을 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+                  example: "d2d78s9ad727"
+                user_id:
+                  type: string
+                  example: "5"
+                role:
+                  type: string
+                  enum:
+                    - user
+                    - council
+                    - admin
+                    - webmaster
+                  default: "user"
+      '400':
+        description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 제목('title'), 내용('content')이(가) 필수항목 입니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "필수항목 누락: 이메일"
+      '401':
+        description: "이메일 또는 비밀번호가 잘못 입력되었을 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "인증 실패: 이메일 또는 비밀번호가 잘못되었습니다."
+      '500':
+        description: "내부 서버 오류가 발생했을 때 반환됩니다."
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "내부 서버 오류"

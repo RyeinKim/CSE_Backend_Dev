@@ -282,7 +282,7 @@ exports.editPostByPostId = async (req, res) => {
     devlog(`[Cont] editPostByPostId req.session = ${req.session}`);
 
     if (!title) {
-        return res.status(400).json({ message: '필수항목 누락: reply' });
+        return res.status(400).json({ message: '필수항목 누락: title' });
     }
     if (!content) {
         return res.status(400).json({ message: '필수항목 누락: content' });
