@@ -75,8 +75,10 @@ devlog(`HTTPS certificate authority loaded.`);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
-    origin: 'http://49.247.43.150:3000',
-    credentials: true
+    origin: 'http://49.247.43.150:3000', // 여기에 프론트엔드 서버의 주소를 넣어주세요.
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 devlog(`Middleware loaded.`);
 
