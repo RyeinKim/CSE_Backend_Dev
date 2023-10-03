@@ -17,6 +17,14 @@ const port = 80;
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
+app.use(cors({
+    origin: 'http://49.247.43.150:3000', // 여기에 프론트엔드 서버의 주소를 넣어주세요.
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+devlog(`CORS loaded.`);
+
 // Swagger
 const swaggerOptions = {
     definition: {
@@ -74,13 +82,6 @@ devlog(`HTTPS certificate authority loaded.`);
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors({
-    origin: 'http://49.247.43.150:3000', // 여기에 프론트엔드 서버의 주소를 넣어주세요.
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-devlog(`Middleware loaded.`);
 
 // Routes
 app.use('/', routes);
