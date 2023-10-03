@@ -101,7 +101,7 @@ app.use((err, req, res, next) => {
     devlog(`HTTPS listening on port 443`);
 });*/
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     devlog(`HTTP listening on port ${port}`);
 });
 
