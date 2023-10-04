@@ -14,15 +14,8 @@ const {devlog} = require("./config/config");
 const app = express();
 const port = 80;
 
-app.use(cors({
-    origin: 'http://49.247.43.150:3000',
-    credentials: true,
-}));
-
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
-
-devlog(`CORS loaded.`);
 
 // Swagger
 const swaggerOptions = {
@@ -35,7 +28,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://49.247.43.150:80', // API가 호스팅될 서버의 URL을 입력합니다.
+                url: 'http://localhost:80', // API가 호스팅될 서버의 URL을 입력합니다.
             },
         ],
     },
@@ -65,7 +58,7 @@ app.use(session({
         httpOnly: true,
         secure: false,
         maxAge: 1000 * 60 * 60 * 1, // 1시간
-        sameSite: 'Lax', // Crosssite request 전송을 허용
+        sameSite: 'Lax', // Cross-site request 전송을 허용
     },
 }));
 
@@ -81,6 +74,11 @@ devlog(`HTTPS certificate authority loaded.`);
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
+devlog(`Middleware loaded.`);
 
 // Routes
 app.use('/', routes);
@@ -90,19 +88,23 @@ app.use((req, res, next) => {
     next(error);
 });
 
-/*app.use((err, req, res, next) => {
+app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.send({
         error: {
             message: err.message,
         },
     });
-});*/
+});
 
 /*server.listen(443, () => {
     devlog(`HTTPS listening on port 443`);
 });*/
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     devlog(`HTTP listening on port ${port}`);
 });
+
+/*
+
+ */
