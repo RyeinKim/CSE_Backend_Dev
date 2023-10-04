@@ -14,6 +14,11 @@ const {devlog} = require("./config/config");
 const app = express();
 const port = 80;
 
+app.use(cors({
+    origin: 'http://3.36.100.218:3000',
+    credentials: true
+}));
+
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
@@ -28,7 +33,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://localhost:80', // API가 호스팅될 서버의 URL을 입력합니다.
+                url: 'http://3.36.100.218:80', // API가 호스팅될 서버의 URL을 입력합니다.
             },
         ],
     },
@@ -74,10 +79,6 @@ devlog(`HTTPS certificate authority loaded.`);
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-}));
 devlog(`Middleware loaded.`);
 
 // Routes
