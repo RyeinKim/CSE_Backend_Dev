@@ -71,7 +71,7 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
     devlog(email);
     devlog(password);
-git ad
+
     if (!email) {
         return res.status(400).json({ message: '필수항목 누락: 이메일' });
     }
