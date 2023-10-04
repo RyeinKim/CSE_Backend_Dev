@@ -12,7 +12,7 @@ const routes = require('./routes/index');
 const {devlog} = require("./config/config");
 
 const app = express();
-const port = 80;
+const port = 3001;
 
 app.use(cors({
     origin: 'http://3.36.100.218:3000',
@@ -33,7 +33,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://3.36.100.218:80', // API가 호스팅될 서버의 URL을 입력합니다.
+                url: 'http://3.36.100.218:3001', // API가 호스팅될 서버의 URL을 입력합니다.
             },
         ],
     },
