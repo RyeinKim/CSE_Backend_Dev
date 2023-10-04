@@ -165,7 +165,7 @@ exports.getTotalPostsByReply = async (user_id) => {
     `;
 
     return new Promise((resolve, reject) => {
-        db.connection.query(totalPostsQuery, [user_id, user_id, user_id], (error, results) => {
+        db.connection.query(totalPostsQuery, [user_id, user_id, user_id, user_id], (error, results) => {
             if (error) {
                 errorlog(error);
                 return reject(error);

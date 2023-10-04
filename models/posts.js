@@ -238,7 +238,7 @@ exports.getPostByUserId = async (reqData) => {
             ) AS results
             LIMIT ? OFFSET ?;
             `;
-            params = [user_id, user_id, user_id, limit, offset];
+            params = [user_id, user_id, user_id, user_id, limit, offset];
             break;
         case 'free':
             sql = `SELECT 'free' AS board_type, * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
@@ -352,7 +352,7 @@ exports.getPostByReply = async (reqData) => {
 
     try {
         const results = await new Promise((resolve, reject) => {
-            mysql.connection.query(sql, [user_id, user_id, user_id, limit, offset], (error, results) => {
+            mysql.connection.query(sql, [user_id, user_id, user_id, user_id, limit, offset], (error, results) => {
                 if (error) {
                     errorlog(error);
                     return reject(error);

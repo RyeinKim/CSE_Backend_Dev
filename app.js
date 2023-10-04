@@ -68,13 +68,13 @@ app.use(session({
 }));
 
 // HTTPS
-const options = {
+/*const options = {
     key: fs.readFileSync(process.env.KEY_PATH),
     cert: fs.readFileSync(process.env.CERT_PATH),
     ca: fs.readFileSync(process.env.CA_PATH)
 };
 const server = https.createServer(options, app);
-devlog(`HTTPS certificate authority loaded.`);
+devlog(`HTTPS certificate authority loaded.`);*/
 
 // 미들웨어
 app.use(express.json());
@@ -102,10 +102,6 @@ app.use((err, req, res, next) => {
     devlog(`HTTPS listening on port 443`);
 });*/
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
     devlog(`HTTP listening on port ${port}`);
 });
-
-/*
-
- */
