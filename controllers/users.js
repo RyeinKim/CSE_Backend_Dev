@@ -67,8 +67,11 @@ exports.deleteUser = async (req, res) => {
 
 // 회원 로그인
 exports.loginUser = async (req, res) => {
+    devlog('login in');
     const { email, password } = req.body;
-
+    devlog(email);
+    devlog(password);
+    
     if (!email) {
         return res.status(400).json({ message: '필수항목 누락: 이메일' });
     }

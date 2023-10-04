@@ -14,14 +14,13 @@ const {devlog} = require("./config/config");
 const app = express();
 const port = 80;
 
-dotenv.config();
-dotenv.config({ path: '.env.keys' });
-
 app.use(cors({
-    origin: 'http://49.247.43.150:3000',
+    origin: '*',
     credentials: true,
 }));
-devlog(`CORS loaded.`);
+
+dotenv.config();
+dotenv.config({ path: '.env.keys' });
 
 devlog(`CORS loaded.`);
 
@@ -66,7 +65,7 @@ app.use(session({
         httpOnly: true,
         secure: false,
         maxAge: 1000 * 60 * 60 * 1, // 1시간
-        sameSite: 'Lax', // Cross-site request 전송을 허용
+        sameSite: 'Lax', // Crosssite request 전송을 허용
     },
 }));
 
@@ -107,7 +106,3 @@ app.use((req, res, next) => {
 app.listen(port, '0.0.0.0', () => {
     devlog(`HTTP listening on port ${port}`);
 });
-
-/*
-
- */
