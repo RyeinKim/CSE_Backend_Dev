@@ -351,3 +351,40 @@ exports.recoverUserByUserId = async (user_id) => {
         throw error;
     }
 }
+
+exports.writeReply = async (reqData) => {
+    const { post_id, user_id, username, reply, tableName } = reqData;
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = `INSERT INTO reply.reply_free (post_id, user_id, username, reply)
+                VALUES (?, ?, ?, ?);`;
+            break;
+        case 'notice':
+            sql = `INSERT INTO reply.reply_notice (post_id, user_id, username, reply)
+                VALUES (?, ?, ?, ?);`;
+            break;
+        case 'reply':
+            sql = `INSERT INTO reply.reply (post_id, user_id, username, reply)
+                VALUES (?, ?, ?, ?);`;
+            break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
+    }
+
+    try {
+        const results = await new Promise((resolve, reject) => {
+            mysql.connection.query(sql, [post_id, user_id, username, reply], (error, results) => {
+                if (error)  {
+                    errorlog(error);
+                    return reject(error);
+                }
+                return resolve(results.insertId);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}

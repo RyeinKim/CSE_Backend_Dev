@@ -232,7 +232,7 @@ exports.getPostByUserId = async (reqData) => {
                 UNION
                 SELECT 'notice' AS board_type, NoticeBoard.* FROM posts.NoticeBoard WHERE author_id = ?
                 UNION
-                SELECT 'qna' AS board_type, posts.* FROM posts.QABoard WHERE author_id = ?
+                SELECT 'qna' AS board_type, QABoard.* FROM posts.QABoard WHERE author_id = ?
                 UNION
                 SELECT 'posts' AS board_type, posts.* FROM posts.posts WHERE author_id = ?
             ) AS results

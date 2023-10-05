@@ -1,6 +1,8 @@
 const { devlog, errorlog } = require("../config/config");
 const Admin = require('../models/admin');
 const userUtils = require('../utils/userUtils');
+const replyUtils = require("../utils/replyUtils");
+const Reply = require("../models/reply");
 
 /**
  * 학생 정보 생성
@@ -218,6 +220,40 @@ exports.recoverUserByUserId = async (req, res) => {
 
         return res.status(201).json({ message: `유저 정보 복구 완료 / 복구된 유저 ID = ${user_id}` });
     } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}
+
+exports.writeReply = async (req, res) => {
+    const { tableName } = req.params;
+    const { reply, post_id } = req.body;
+    const { user_id } = req.session;
+
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
+    if (!post_id) {
+        return res.status(400).json({ message: '필수항목 누락: post_id' });
+    }
+    if (!reply) {
+        return res.status(400).json({ message: '필수항목 누락: 댓글내용' });
+    }
+
+    try {
+        const user = await replyUtils.getUserById(user_id);
+
+        const reqData = {
+            post_id: post_id,
+            reply: reply,
+            username: user.username,
+            user_id: user_id,
+            tableName: tableName,
+        }
+
+        const reply_id = await Reply.writeReply(reqData);
+        return res.status(201).json({ message: `댓글 업로드 완료 / 댓글ID = ${reply_id}` });
+    } catch(error) {
         errorlog(error);
         return res.status(500).json({ message: '내부 서버 오류' });
     }

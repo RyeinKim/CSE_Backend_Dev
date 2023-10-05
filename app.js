@@ -15,7 +15,7 @@ const app = express();
 const port = 3001;
 
 app.use(cors({
-    origin: 'http://3.36.100.218:3000',
+    origin: 'http://43.200.60.143:3000',
     credentials: true
 }));
 
@@ -33,7 +33,7 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url: 'http://3.36.100.218:3001', // API가 호스팅될 서버의 URL을 입력합니다.
+                url: 'http://43.200.60.143:3001', // API가 호스팅될 서버의 URL을 입력합니다.
             },
         ],
     },
