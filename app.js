@@ -9,7 +9,7 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const routes = require('./routes/index');
-const { dev, devlog } = require("./config/config");
+const { devlog } = require("./config/config");
 
 const app = express();
 const port = 3001;
@@ -17,7 +17,7 @@ const port = 3001;
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
-if (dev === 'dev') {
+if (process.env.NODE_ENV === 'dev') {
     console.log(`devmode`);
     app.use(cors({
         origin: 'http://localhost:3000',
