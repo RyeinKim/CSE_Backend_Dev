@@ -13,6 +13,9 @@ exports.getTotalPosts = async (tableName) => {
         case 'qna':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard;`;
             break;
+        case 'apply':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.ApplyBoard;`;
+            break;
         case 'posts':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts;`;
             break;
@@ -90,6 +93,9 @@ exports.getTotalPostsByUserId = async (reqData) => {
         case 'qna':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard WHERE author_id = ?;`;
             break;
+        case 'apply':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.ApplyBoard WHERE author_id = ?;`;
+            break;
         case 'posts':
             totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts WHERE author_id = ?;`;
             break;
@@ -119,6 +125,9 @@ exports.getTotalDelPosts = async (tableName) => {
             break;
         case 'qna':
             totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_qa;`;
+            break;
+        case 'apply':
+            totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.del_apply;`;
             break;
         case 'posts':
             totalDelPostsQuery = `SELECT COUNT(*) AS totalPosts FROM del_posts.delete_posts;`;

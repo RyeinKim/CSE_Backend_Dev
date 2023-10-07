@@ -21,7 +21,7 @@ let corsUrl = '';
 if (process.env.NODE_ENV === 'dev') {
     corsUrl = 'http://localhost:3000';
 } else {
-    corsUrl = 'http://wayne.kr';
+    corsUrl = 'http://wayne.kr:3000';
 }
 app.use(cors({
     origin: corsUrl,

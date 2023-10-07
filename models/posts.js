@@ -28,6 +28,10 @@ exports.writePost = async (reqData) => {
             sql = `INSERT INTO posts.QABoard (author_id, title, author, content)
                 VALUES (?, ?, ?, ?);`;
             break;
+        case 'apply':
+            sql = `INSERT INTO posts.ApplyBoard (author_id, title, author, content)
+                VALUES (?, ?, ?, ?);`;
+            break;
         case 'posts':
             sql = `INSERT INTO posts.posts (author_id, title, author, content)
                 VALUES (?, ?, ?, ?);`;
@@ -68,6 +72,9 @@ exports.getPostsAll = async (reqData) => {
             break;
         case 'qna':
             sql = `SELECT * FROM posts.QABoard LIMIT ? OFFSET ?;`;
+            break;
+        case 'apply':
+            sql = `SELECT * FROM posts.ApplyBoard LIMIT ? OFFSET ?;`;
             break;
         case 'posts':
             sql = `SELECT * FROM posts.posts LIMIT ? OFFSET ?;`;
@@ -127,6 +134,16 @@ exports.deletePostById = async (reqData) => {
                  FROM posts.QABoard
                  WHERE post_id = ? AND author_id = ?;
                  DELETE FROM posts.NoticeBoard
+                 WHERE post_id = ? AND author_id = ?;`;
+            break;
+        case 'apply':
+            checkOwnerSql = `SELECT author_id FROM posts.ApplyBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.ApplyBoard SET deletedAt = ? WHERE post_id = ? AND author_id = ?;
+                 INSERT INTO del_posts.del_apply (post_id, author_id, author, title, content, createAt, deletedAt)
+                 SELECT post_id, author_id, author, title, content, createAt, ? as deletedAt
+                 FROM posts.ApplyBoard
+                 WHERE post_id = ? AND author_id = ?;
+                 DELETE FROM posts.ApplyBoard
                  WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'posts':
@@ -192,7 +209,10 @@ exports.getDeletedPosts = async (reqData) => {
             sql = `SELECT * FROM del_posts.del_notice LIMIT ? OFFSET ?;`;
             break;
         case 'qna':
-            sql = `SELECT * FROM del_posts.QABoard LIMIT ? OFFSET ?;`;
+            sql = `SELECT * FROM del_posts.del_qa LIMIT ? OFFSET ?;`;
+            break;
+        case 'apply':
+            sql = `SELECT * FROM del_posts.del_apply LIMIT ? OFFSET ?;`;
             break;
         case 'posts':
             sql = `SELECT * FROM del_posts.delete_posts LIMIT ? OFFSET ?;`;
@@ -234,11 +254,13 @@ exports.getPostByUserId = async (reqData) => {
                 UNION
                 SELECT 'qna' AS board_type, QABoard.* FROM posts.QABoard WHERE author_id = ?
                 UNION
+                SELECT 'apply' AS board_type, ApplyBoard.* FROM posts.ApplyBoard WHERE author_id = ?
+                UNION
                 SELECT 'posts' AS board_type, posts.* FROM posts.posts WHERE author_id = ?
             ) AS results
             LIMIT ? OFFSET ?;
             `;
-            params = [user_id, user_id, user_id, user_id, limit, offset];
+            params = [user_id, user_id, user_id, user_id, user_id, limit, offset];
             break;
         case 'free':
             sql = `SELECT 'free' AS board_type, * FROM posts.FreeBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
@@ -250,6 +272,10 @@ exports.getPostByUserId = async (reqData) => {
             break;
         case 'qna':
             sql = `SELECT 'qna' AS board_type, * FROM posts.QABoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
+            params = [user_id, limit, offset];
+            break
+        case 'apply':
+            sql = `SELECT 'apply' AS board_type, * FROM posts.ApplyBoard WHERE author_id = ? LIMIT ? OFFSET ?;`;
             params = [user_id, limit, offset];
             break;
         case 'posts':
@@ -293,6 +319,9 @@ exports.getPostByPostId = async (reqData) => {
             break;
         case 'qna':
             sql = 'SELECT * FROM posts.QABoard WHERE post_id = ?';
+            break;
+        case 'apply':
+            sql = 'SELECT * FROM posts.ApplyBoard WHERE post_id = ?';
             break;
         case 'posts':
             sql = 'SELECT * FROM posts.posts WHERE post_id = ?';
@@ -342,6 +371,11 @@ exports.getPostByReply = async (reqData) => {
             JOIN posts.QABoard n ON rn.post_id = n.post_id
             WHERE rn.user_id = ?
             UNION ALL
+            SELECT 'apply' AS board_type, n.*
+            FROM reply.reply_apply rn
+            JOIN posts.ApplyBoard n ON rn.post_id = n.post_id
+            WHERE rn.user_id = ?
+            UNION ALL
             SELECT 'posts' AS board_type, p.*
             FROM reply.reply r
             JOIN posts.posts p ON r.post_id = p.post_id
@@ -384,6 +418,10 @@ exports.editPostByPostId = async (reqData) => {
         case 'qna':
             checkOwnerSql = `SELECT author_id FROM posts.QABoard WHERE post_id = ?`;
             sql = `UPDATE posts.QABoard SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
+            break;
+        case 'apply':
+            checkOwnerSql = `SELECT author_id FROM posts.ApplyBoard WHERE post_id = ?`;
+            sql = `UPDATE posts.ApplyBoard SET title = ?, content = ? WHERE post_id = ? AND author_id = ?;`;
             break;
         case 'posts':
             checkOwnerSql = `SELECT author_id FROM posts.posts WHERE post_id = ?`;
