@@ -319,3 +319,33 @@ exports.editPostByPostId = async (req, res) => {
         return res.status(500).json({ message: '내부 서버 오류'});
     }
 }
+
+exports.searchPosts = async (req, res) => {
+    devlog('[Cont] posts / searchPosts in');
+    const { tableName } = req.params;
+    const { keyword } = req.body;
+
+    if (!tableName) {
+        return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
+    }
+    if (!keyword) {
+        return res.status(400).json({ message: '필수항목 누락: keyword' });
+    }
+
+    const reqData = {
+        tableName: tableName,
+        keyword: keyword,
+    }
+
+    try {
+        const post = await Post.searchPosts(reqData);
+        if (!post) {
+            return res.status(404).json({ message: '게시글이 존재하지 않음' });
+        }
+        devlog(post);
+        return res.status(200).json(post);
+    } catch (error) {
+        errorlog(error);
+        return res.status(500).json({ message: '내부 서버 오류' });
+    }
+}

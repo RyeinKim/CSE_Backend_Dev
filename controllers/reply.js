@@ -5,7 +5,7 @@ const replyUtils = require("../utils/replyUtils");
 exports.writeReply = async (req, res) => {
     const { tableName } = req.params;
     const { reply, post_id } = req.body;
-    const { user_id } = req.session;
+    const { user_id, role } = req.session;
 
     if (!tableName) {
         return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
@@ -15,6 +15,10 @@ exports.writeReply = async (req, res) => {
     }
     if (!reply) {
         return res.status(400).json({ message: '필수항목 누락: 댓글내용' });
+    }
+
+    if (tableName === 'apply' && (role === 'webmaster' || role === 'admin')) {
+        return res.status(401).json({ message: '관리자만 사용 가능합니다!' });
     }
 
     try {
@@ -217,7 +221,7 @@ exports.getDeletedReply = async (req, res) => {
 exports.editReply = async (req, res) => {
     const { reply } = req.body;
     const { reply_id, tableName } = req.params;
-    const user_id = req.session.user_id;
+    const { user_id, role } = req.session;
 
     devlog(`[Cont] editReply req.session = ${req.session}`);
     devlog(`[Cont] editReply content = ${reply}`);
@@ -231,6 +235,10 @@ exports.editReply = async (req, res) => {
     }
     if (!reply_id) {
         return res.status(400).json({ message: '필수항목 누락: reply_id 파라미터' });
+    }
+
+    if (tableName === 'apply' && (role === 'webmaster' || role === 'admin')) {
+        return res.status(401).json({ message: '관리자만 사용 가능합니다!' });
     }
 
     const reqData = {

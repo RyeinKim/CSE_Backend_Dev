@@ -21,7 +21,7 @@ let corsUrl = '';
 if (process.env.NODE_ENV === 'dev') {
     corsUrl = 'http://localhost:3000';
 } else {
-    corsUrl = 'http://wayne.kr:3000';
+    corsUrl = 'http://43.200.60.143:3000';
 }
 app.use(cors({
     origin: corsUrl,
@@ -57,7 +57,7 @@ let swaggerUrl = '';
 if (process.env.NODE_ENV === 'dev') {
     swaggerUrl = 'http://localhost:3001';
 } else {
-    swaggerUrl = 'http://wayne.kr';
+    swaggerUrl = 'http://43.200.60.143:3000/';
 }
 const swaggerOptions = {
     definition: {
@@ -90,7 +90,7 @@ devlog(`HTTPS certificate authority loaded.`);*/
 // 미들웨어
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-devlog(`Middleware loaded.`);
+console.log(`Middleware loaded.`);
 
 // Routes
 app.use('/', routes);

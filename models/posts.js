@@ -303,7 +303,6 @@ exports.getPostByUserId = async (reqData) => {
     }
 }
 
-
 // 게시글ID로 게시글 불러오기
 exports.getPostByPostId = async (reqData) => {
     devlog(`[Model] posts / getPostByPostId in`);
@@ -461,6 +460,54 @@ exports.editPostByPostId = async (reqData) => {
                     return reject(new Error('수정된 내용이 없음')); // 업데이트된 행이 없을 경우
                 }
                 resolve(results);
+            });
+        });
+        return results;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// 게시글ID로 게시글 불러오기
+exports.searchPosts = async (reqData) => {
+    devlog(`[Model] posts / searchPosts in`);
+    const { tableName, keyword } = reqData;
+    const keywordSQL = `%${keyword}%`;
+    console.log(keywordSQL);
+
+    let sql;
+    switch (tableName) {
+        case 'free':
+            sql = 'SELECT * FROM posts.FreeBoard WHERE title LIKE ?';
+            break;
+        case 'notice':
+            sql = 'SELECT * FROM posts.NoticeBoard WHERE title LIKE ?';
+            break;
+        case 'qna':
+            sql = 'SELECT * FROM posts.QABoard WHERE title LIKE ?';
+            break;
+        case 'apply':
+            sql = 'SELECT * FROM posts.ApplyBoard WHERE title LIKE ?';
+            break;
+        case 'posts':
+            sql = 'SELECT * FROM posts.posts WHERE title LIKE ?';
+            break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
+    }
+
+    try {
+        const results = await new Promise ((resolve, reject) => {
+            mysql.connection.query(sql, [keywordSQL], (error, results) => {
+                if (error) {
+                    devlog(error);
+                    return reject(error);
+                }
+                if (results.length === 0) {
+                    return resolve(null);
+                }
+                devlog(results);
+                return resolve(results);
             });
         });
         return results;

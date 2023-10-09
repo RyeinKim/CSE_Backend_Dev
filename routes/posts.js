@@ -650,6 +650,80 @@ router.get('/posts/byreply', isLoggedIn, postsController.getPostByReply); // 유
  */
 router.patch('/posts/edit/:tableName/:post_id', isLoggedIn, postsController.editPostByPostId);
 
+/**
+ * @swagger
+ * /posts/:tableName/:post_id:
+ *   get:
+ *     tags:
+ *       - Posts
+ *     description: "게시글ID로 게시글 정보 불러오기"
+ *     parameters:
+ *       - name: tableName
+ *         in: path
+ *         description: "불러올 게시판 이름"
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [all, free, notice, qna]
+ *       - name: post_id
+ *         in: path
+ *         description: "불러올 게시글 ID"
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       '200':
+ *         description: "요청된 ID의 게시글을 불러왔을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 title:
+ *                   type: string
+ *                   example: "게시글 제목"
+ *                 content:
+ *                   type: string
+ *                   example: "게시글 내용"
+ *                 author:
+ *                   type: string
+ *                   example: "작성자 이름"
+ *                 date:
+ *                   type: string
+ *                   example: "게시일"
+ *       '400':
+ *         description: "필수 항목이 누락되었을 때 반환됩니다. 게시판이름('tableName'), 게시글ID('post_id')이(가) 필수항목 입니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "필수항목 누락: post_id 파라미터"
+ *       '404':
+ *         description: "게시글이 존재하지 않을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "게시글이 존재하지 않음"
+ *       '500':
+ *         description: "내부 서버 오류가 발생했을 때 반환됩니다."
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "내부 서버 오류"
+ */
+router.get('/posts/search/:tableName', isLoggedIn, postsController.searchPosts);  // 게시글 ID 로 게시글 불러오기 API
+
 // router.get('/posts/:tableName/:id', isLoggedIn, postsController.getPostsById);
 
 module.exports = router;
