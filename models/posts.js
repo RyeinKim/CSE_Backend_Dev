@@ -471,26 +471,26 @@ exports.editPostByPostId = async (reqData) => {
 // 게시글ID로 게시글 불러오기
 exports.searchPosts = async (reqData) => {
     devlog(`[Model] posts / searchPosts in`);
-    const { tableName, keyword } = reqData;
+    const { offset, limit, tableName, keyword } = reqData;
     const keywordSQL = `%${keyword}%`;
     console.log(keywordSQL);
 
     let sql;
     switch (tableName) {
         case 'free':
-            sql = 'SELECT * FROM posts.FreeBoard WHERE title LIKE ?';
+            sql = 'SELECT * FROM posts.FreeBoard WHERE title LIKE ? LIMIT ? OFFSET ?';
             break;
         case 'notice':
-            sql = 'SELECT * FROM posts.NoticeBoard WHERE title LIKE ?';
+            sql = 'SELECT * FROM posts.NoticeBoard WHERE title LIKE ? LIMIT ? OFFSET ?';
             break;
         case 'qna':
-            sql = 'SELECT * FROM posts.QABoard WHERE title LIKE ?';
+            sql = 'SELECT * FROM posts.QABoard WHERE title LIKE ? LIMIT ? OFFSET ?';
             break;
         case 'apply':
-            sql = 'SELECT * FROM posts.ApplyBoard WHERE title LIKE ?';
+            sql = 'SELECT * FROM posts.ApplyBoard WHERE title LIKE ? LIMIT ? OFFSET ?';
             break;
         case 'posts':
-            sql = 'SELECT * FROM posts.posts WHERE title LIKE ?';
+            sql = 'SELECT * FROM posts.posts WHERE title LIKE ? LIMIT ? OFFSET ?';
             break;
         default:
             throw new Error(`올바르지 않은 tableName: ${tableName}`);
@@ -498,7 +498,7 @@ exports.searchPosts = async (reqData) => {
 
     try {
         const results = await new Promise ((resolve, reject) => {
-            mysql.connection.query(sql, [keywordSQL], (error, results) => {
+            mysql.connection.query(sql, [keywordSQL, limit, offset], (error, results) => {
                 if (error) {
                     devlog(error);
                     return reject(error);

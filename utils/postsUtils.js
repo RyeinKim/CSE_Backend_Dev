@@ -183,3 +183,39 @@ exports.getTotalPostsByReply = async (user_id) => {
         });
     });
 };
+
+exports.getTotalPostsByKeyword = async (reqData) => {
+    const { keyword, tableName } = reqData;
+    let keyWordWrap = `%${keyword}%`;
+    let totalPostsQuery;
+
+    switch (tableName) {
+        case 'free':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.FreeBoard WHERE title LIKE ?;`;
+            break;
+        case 'notice':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.NoticeBoard WHERE title LIKE ?;`;
+            break;
+        case 'qna':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.QABoard WHERE title LIKE ?;`;
+            break;
+        case 'apply':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.ApplyBoard WHERE title LIKE ?;`;
+            break;
+        case 'posts':
+            totalPostsQuery = `SELECT COUNT(*) AS totalPosts FROM posts.posts WHERE title LIKE ?;`;
+            break;
+        default:
+            throw new Error(`올바르지 않은 tableName: ${tableName}`);
+    }
+
+    return new Promise((resolve, reject) => {
+        db.connection.query(totalPostsQuery, [keyWordWrap], (error, results) => {
+            if (error) {
+                errorlog(error);
+                return reject(error);
+            }
+            resolve(results[0].totalPosts);
+        });
+    });
+};

@@ -722,7 +722,7 @@ router.patch('/posts/edit/:tableName/:post_id', isLoggedIn, postsController.edit
  *                   type: string
  *                   example: "내부 서버 오류"
  */
-router.get('/posts/search/:tableName', isLoggedIn, postsController.searchPosts);  // 게시글 ID 로 게시글 불러오기 API
+router.get('/search/posts/:tableName', isLoggedIn, postsController.searchPosts);  // 게시글 ID 로 게시글 불러오기 API
 
 // router.get('/posts/:tableName/:id', isLoggedIn, postsController.getPostsById);
 

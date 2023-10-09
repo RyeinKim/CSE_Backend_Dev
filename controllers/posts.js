@@ -1,10 +1,8 @@
 const Post = require('../models/posts');
-const mysql = require('mysql');
 const { devlog, errorlog } = require("../config/config");
 const db = require("../config/database");
 const userUtils = require("../utils/userUtils");
 const postsUtils = require("../utils/postsUtils");
-const Reply = require("../models/reply");
 
 /**
  * 게시글쓰기
@@ -323,27 +321,41 @@ exports.editPostByPostId = async (req, res) => {
 exports.searchPosts = async (req, res) => {
     devlog('[Cont] posts / searchPosts in');
     const { tableName } = req.params;
-    const { keyword } = req.body;
+    const offset = parseInt(req.query.offset);
+    const limit = parseInt(req.query.limit);
+    const { keyword } = req.query;
 
+    if (offset === undefined || isNaN(offset)) {
+        return res.status(400).json({ message: `필수항목 누락: offset 파라미터` });
+    }
+    if (limit === undefined || isNaN(limit)) {
+        return res.status(400).json({ message: `필수항목 누락: limit 파라미터` });
+    }
     if (!tableName) {
         return res.status(400).json({ message: '필수항목 누락: tableName 파라미터' });
     }
     if (!keyword) {
-        return res.status(400).json({ message: '필수항목 누락: keyword' });
+        return res.status(400).json({ message: '필수항목 누락: keyword 파라미터' });
     }
 
     const reqData = {
+        offset: offset,
+        limit: limit,
         tableName: tableName,
         keyword: keyword,
     }
 
     try {
         const post = await Post.searchPosts(reqData);
+        const totalPosts = await postsUtils.getTotalPostsByKeyword(reqData);
         if (!post) {
             return res.status(404).json({ message: '게시글이 존재하지 않음' });
         }
         devlog(post);
-        return res.status(200).json(post);
+        return res.status(200).json({
+            message: post,
+            totalPosts: totalPosts,
+        });
     } catch (error) {
         errorlog(error);
         return res.status(500).json({ message: '내부 서버 오류' });
