@@ -291,7 +291,6 @@ exports.editPostByPostId = async (req, res) => {
     if (!post_id) {
         return res.status(400).json({ message: '필수항목 누락: post_id 파라미터' });
     }
-
     const reqData = {
         title: title,
         content: content,

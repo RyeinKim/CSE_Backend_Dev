@@ -183,7 +183,6 @@ exports.getTotalPostsByReply = async (user_id) => {
         });
     });
 };
-
 exports.getTotalPostsByKeyword = async (reqData) => {
     const { keyword, tableName } = reqData;
     let keyWordWrap = `%${keyword}%`;
