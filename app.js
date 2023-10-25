@@ -17,15 +17,19 @@ const port = 3001;
 dotenv.config();
 dotenv.config({ path: '.env.keys' });
 
-let corsUrl = '';
-if (process.env.NODE_ENV === 'dev') {
-    corsUrl = 'http://localhost:3000';
-} else {
-    corsUrl = 'http://43.200.60.143:3000';
-}
+const allowedOrigins = [
+    'http://localhost:80',
+    'http://localhost',
+    'http://localhost:3000',
+    'http://43.200.60.143:3000',
+    'http://43.200.60.143:80',
+    'http://43.200.60.143',
+    'http://wayne.kr',
+];
+
 app.use(cors({
-    origin: corsUrl,
-    credentials: true
+    origin: allowedOrigins,
+    credentials: true,
 }));
 
 // session
@@ -42,7 +46,7 @@ const sessionStore = new MySQLStore(sessionStoreOptions);
 app.use(session({
     secret: "qweqwe",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: sessionStore,
     cookie: {
         httpOnly: true,
