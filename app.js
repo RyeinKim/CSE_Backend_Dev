@@ -53,6 +53,8 @@ app.use(session({
         secure: false,
         maxAge: 1000 * 60 * 60 * 1, // 1시간
         sameSite: 'Lax', // Cross-site request 전송을 허용
+        domain: 'wayne.kr',  // 이 부분을 추가
+        path: '/',
     },
 }));
 
